@@ -146,6 +146,13 @@ $(document).ready(function() {
   $('#add-policy-load').load('./html/modals/create_policy.html');
   $('#rm-area-load').load('./html/modals/remove_area.html');
   
+  $('#offcanvasleft').click(function() {
+  $('.row-offcanvas-left').toggleClass('active');
+});
+
+$('[data-toggle=offcanvasright]').click(function() {
+  $('.row-offcanvas-right').toggleClass('active');
+});
 
   $('#addDeviceFor').submit(function(e){
     console.log('test');
