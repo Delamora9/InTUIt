@@ -12,6 +12,7 @@
     <link rel="stylesheet" type="text/css" href="./css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="./css/homepage.css">
     <link rel="stylesheet" type="text/css" href="./css/DataTables.css">
+    <link rel="stylesheet" type="text/css" href="./css/vis.css" />
   </head>
 
   <body>
@@ -76,7 +77,27 @@
               </table>
 
             </div>
-            <div class="tab-pane" id="networkView" role="tabpanel"></div>
+            <div class="tab-pane" id="networkView" role="tabpanel">
+              <h1>InTUIt Network</h1>
+	            <div id="mynetwork">
+		            <div class="vis-network" tabindex="900">
+			            <canvas width="500" height="1000" class="network-canvas" id="visual">
+			            </canvas>
+			            <div class="vis-navigation">
+				            <div class="vis-button vis-up" style="touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></div>
+				            <div class="vis-button vis-down" style="touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></div>
+				            <div class="vis-button vis-left" style="touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></div>
+				            <div class="vis-button vis-right" style="touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></div>
+				            <div class="vis-button vis-zoomIn" style="touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></div>
+				            <div class="vis-button vis-zoomOut" style="touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></div>
+				            <div class="vis-button vis-zoomExtends" style="touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></div>
+			            </div>
+		            </div>
+	            </div>
+	            <div id="info">
+	              <p id="selection"></p>
+	            </div>
+            </div>
           </div>
         </div>
       </div>
@@ -259,5 +280,7 @@
     <script src="./js/tether.min.js"></script>
     <script src="./js/DataTables.js"></script>
     <script src="./js/bootstrap.min.js"></script>
+    <script src="./js/vis.js"></script>
+    <script src="./js/display.js"></script>
   </body>
 </html>
