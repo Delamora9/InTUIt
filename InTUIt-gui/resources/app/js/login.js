@@ -80,7 +80,4 @@ function login() {
   	$('#homepage-redirect').click(function() {
 		window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
 	});
-	$('#logout').click(function() {
-		window.location.reload(true);
-	});
 }
