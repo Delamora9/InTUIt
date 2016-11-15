@@ -141,7 +141,39 @@
         </div>
       </div>
     </div>
-    <!-- End modal -->
+    <!-- End Add Area modal -->
+
+    <!-- Modal for Removing an area -->
+    <div id="remove-area-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title text-center" id="myModalLabel2">Remove an Area</h4>
+          </div>
+          <div class="modal-body">
+
+            <form id="removeAreaForm">
+              <div class="form-group">
+                <label for="areaName">Available Areas:</label>
+                <select>
+    				//foreach area in network,
+    				<option value="Area1">Area 1</option>
+    				<option value="Area2">Area 2</option>
+    			</select>
+              </div>
+              <hr>
+              <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+              <input type="submit" class="btn btn-primary" value="Remove Area">
+          </form>
+
+        </div>
+      </div>
+    </div>
+    </div>
+    <!-- End Remove Area Modal -->
 
     <!-- Modal for Adding a device -->
     <div id="add-device-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
@@ -282,11 +314,7 @@
     </div>
     <!-- End Create Policy Modal -->
 
-
-
-
-
-	<!------------------------ End Modals ----------------------------->
+	  <!------------------------ End Modals ----------------------------->
 
     <!-- Script imports upon page load completion -->
     <script src="./js/network_classes.js"></script>

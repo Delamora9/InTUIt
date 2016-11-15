@@ -54,6 +54,14 @@ $(document).ready(function() {
     }
   });
 
+  //event fires upon adding an area
+  $('#addAreaForm').submit(function(e){
+    e.preventDefault(); //prevent form from redirect
+	addArea();
+    this.reset(); //resets the fields within the form
+	$('#areaName').focus();
+  });
+
   //event fires upon adding a device
   $('#addDeviceForm').submit(function(e){
     e.preventDefault(); //prevent form from redirect
@@ -65,12 +73,12 @@ $(document).ready(function() {
 	$('#deviceName').focus();
   });
 
-  //event fires upon adding an area
-  $('#addAreaForm').submit(function(e){
+  //event fires upon removing a device
+  $('#removeDeviceForm').submit(function(e){
     e.preventDefault(); //prevent form from redirect
-	addArea();
-    this.reset(); //resets the fields within the form
-	$('#areaName').focus();
+    if (confirm('Are you sure you want to remove ' + removeACU.acuName + ' from ' + removeACUArea.areaName + '?')) {
+      removeDevice();
+    }
   });
 
   //event fires upon adding a policy
@@ -88,9 +96,11 @@ function addArea() {
   areaList.push(new Area($('#areaName').val()));
   //update the slectable list of areas in the add acu form
   $('#areaSelect').empty();
+  $('#areaSelect2').empty();
   for (var i = 0; i < areaList.length; i++) {
 	  var area = areaList[i];
 	  $('#areaSelect').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
+    $('#areaSelect2').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
   }
 }
 
@@ -110,6 +120,29 @@ function addDevice() {
     stream.write(JSON.stringify(json));
     stream.end();
   });
+}
+
+//function to remove a device
+function removeDevice() {
+  var index = removeACUArea.acuList.indexOf(removeACU);
+  if (index > -1) {
+    removeACUArea.acuList.splice(index, 1);
+  }
+  $.getJSON("./json/devices.json", function(json) {
+    for (var i = 0; i < json.tableData.length; i++){
+      if(removeACU.acuName == json.tableData[i][1]){
+        delete json.tableData[i]; //this part is not working yet and needs to be modified
+      }
+    }
+    removeACU = '';
+    removeACUArea = '';
+  });
+  $('#deviceSelect').empty();
+  $('#deviceSelect').append('<option value=\"none\" selected>Select a Device</option>');
+  for (var i = 0; i < removeACUArea.acuList.length; i++) {
+    var device = removeACUArea.acuList[i];
+    $('#deviceSelect').append('<option value="' + device.acuName + '">' + device.acuName +'</option>');
+  }
 }
 
 //Adding a policy to an existing ACU
@@ -137,6 +170,18 @@ $('#submitNDF').click(function buildNDF() {
   //visual update of submit below submit button
   var date = new Date();
   $('#ndfUpdateTime').html('<span class="white">NDF for ' + networkName + " updated on " + date.toLocaleString() + "</span>");
+});
+
+//Prefires for when user clicks Remove Area button
+$('#remove-area-button').click(function() {
+  if (areaList.length == 0) {
+    alert("No areas have been created. Please create one");
+  }
+  else {
+    $('#remove-area-modal').modal({
+      focus: true
+    });
+  }
 });
 
 //Create Device Datatable when button to summon modal is clicked
@@ -175,9 +220,21 @@ $('#add-device-button').click(function() {
   }
 });
 
+//Prefires for when user clicks Remove Device button
+$('#remove-device-button').click(function() {
+  if (areaList.length == 0) {
+    alert("No areas have been created. Please create one");
+  }
+  else {
+    $('#remove-device-modal').modal({
+      focus: true
+    });
+  }
+});
+
+//Prefires for when user clicks Add Policy button
 $('#add-policy-button').click(function() {
   if (areaList.length == 0) {
-    //e.preventDefault();
     alert("No areas have been created. Please create one");
   }
   else {
@@ -187,6 +244,8 @@ $('#add-policy-button').click(function() {
   }
 });
 
+
+/********************** GENERAL PROGRAM METHOD CALLS ***********************/
 //Finds a created area in the list of areas
 function findArea(name) {
 	for (var i = 0; i < areaList.length; i++) {
