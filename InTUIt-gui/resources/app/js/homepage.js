@@ -97,6 +97,7 @@ function addArea() {
   //update the slectable list of areas in the add acu form
   $('#areaSelect').empty();
   $('#areaSelect2').empty();
+  $('#areaSelect2').append('<option value=\"none\" selected>Select an Area</option>');
   for (var i = 0; i < areaList.length; i++) {
 	  var area = areaList[i];
 	  $('#areaSelect').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
@@ -242,6 +243,22 @@ $('#add-policy-button').click(function() {
       focus: true
     });
   }
+});
+
+//event triggered by selecting an area in remove device modal
+$('#areaSelect2').change(function() {
+  $('#deviceSelect').empty();
+  $('#deviceSelect').append('<option value=\"none\" selected>Select a Device</option>');
+  removeACUArea = findArea(this.options[this.selectedIndex].value);
+  for (var i = 0; i < removeACUArea.acuList.length; i++) {
+    var device = removeACUArea.acuList[i];
+    $('#deviceSelect').append('<option value="' + device.acuName + '">' + device.acuName +'</option>');
+  }
+});
+
+//event triggered by selecting an area in remove device modal
+$('#deviceSelect').change(function() {
+  removeACU = findACU(this.options[this.selectedIndex].value, removeACUArea);
 });
 
 
