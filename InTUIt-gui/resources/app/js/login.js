@@ -63,7 +63,7 @@ function networkSelect() {
 */
 
 $(document).ready(function() {
-	$('#choose-network-load').load('./html/modals/login_network.html');
+	$('#choose-network-load').load('./html/login_network.html');
 	$("#login").submit(function(e) {
     e.preventDefault();
 		login();
