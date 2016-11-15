@@ -11,6 +11,8 @@
     <!-- Style imports -->
     <link rel="stylesheet" type="text/css" href="./css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="./css/homepage.css">
+    <link rel="stylesheet" type="text/css" href="./css/vis.css">
+    <link rel="stylesheet" type="text/css" href="./css/NetworkVis.css">
     <link rel="stylesheet" type="text/css" href="./css/DataTables.css">
   </head>
 
@@ -64,6 +66,7 @@
           </ul>
           <!-- Tab Content -->
           <div class="tab-content">
+            <!-- View changes tab -->
             <div class="tab-pane active" id="changes" role="tabpanel">
               <h2> Current Changes to Network </h2> <br>
 
@@ -77,8 +80,35 @@
               </table>
 
             </div>
-            <div class="tab-pane" id="networkView" role="tabpanel"></div>
+            <!-- End View Changes Tab -->
+
+            <!--View Network Tab-->
+            <div class="tab-pane max-height" id="networkView" role="tabpanel">
+
+							<div id="mynetwork">
+								<div class="vis-network max-height" tabindex="900">
+									<canvas class="network-canvas">
+									</canvas>
+									<div class="vis-navigation">
+										<div class="vis-button vis-up" style="touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></div>
+										<div class="vis-button vis-down" style="touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></div>
+										<div class="vis-button vis-left" style="touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></div>
+										<div class="vis-button vis-right" style="touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></div>
+										<div class="vis-button vis-zoomIn" style="touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></div>
+										<div class="vis-button vis-zoomOut" style="touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></div>
+										<div class="vis-button vis-zoomExtends" style="touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></div>
+									</div>
+								</div>
+							</div>
+
+							<div id="info">
+							<p id="selection"></p>
+							</div>
+
+						</div>
+						<!--End View Network Tab-->
           </div>
+          <!-- End tab content -->
         </div>
       </div>
 	  <!-- End Display Area -->
@@ -176,6 +206,38 @@
     </div>
     <!-- End Add Device Modal -->
 
+    <!-- Modal for Removing a device -->
+    <div id="remove-device-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-dialog  modal-lg" role="document">
+        <div class="modal-content bigModal">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title text-center" id="myModalLabel">Remove a Device</h4>
+          </div>
+          <div class="modal-body">
+            <form id="removeDeviceForm">
+			          <div class="form-group">
+				          <label for="areaSelect2">Select Area:</label>
+				          <select class="form-control" id="areaSelect2">
+                    <option value="none" selected>Select an Area</option>
+				          </select>
+			            <label for="deviceSelect">Devices:</label>
+                    <option value="none" selected>Select a Device</option>
+			            <select class="form-control" id="deviceSelect">
+				          </select>
+                  </div>
+                  <hr>
+              <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+              <input type="submit" class="btn btn-primary" value="Remove Device">
+            </form>
+        </div>
+      </div>
+    </div>
+  </div>
+    <!-- End Remove Device Modal -->
+
     <!-- Modal for Creating a Policy -->
     <div id="create-policy-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
       <div class="modal-dialog" role="document">
@@ -220,6 +282,10 @@
     </div>
     <!-- End Create Policy Modal -->
 
+
+
+
+
 	<!------------------------ End Modals ----------------------------->
 
     <!-- Script imports upon page load completion -->
@@ -228,5 +294,7 @@
     <script src="./js/tether.min.js"></script>
     <script src="./js/DataTables.js"></script>
     <script src="./js/bootstrap.min.js"></script>
+    <script src="./js/vis-network.min.js"></script>
+    <script src="./js/network_vis.js"></script>
   </body>
 </html>

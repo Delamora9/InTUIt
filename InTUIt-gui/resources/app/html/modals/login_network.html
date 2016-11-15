@@ -1,0 +1,32 @@
+<!--Modal for selecting network on successful login-->
+
+<div id="network-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="NetworkModal" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+				<h4 class="modal-title text-center" id="NetworkModalLabel">
+					Choose a Network
+				</h4>
+			</div>
+			<div class="modal-body">
+				<form>
+					<div class="form-group">
+						<label for="networkName" class="network-label">Available Networks:</label>
+						<select name="networks" id="chooseNetwork">
+							<option value="Network1">Network 1</option>
+							<option value="Network2">Network 2</option>
+							<option value="Network3">Network 3</option>
+						</select>
+					</div>
+					<hr>
+					<button id="logout" type="button" class="btn btn-danger" data-dismiss="modal">Log Out</button>
+					<button id="homepage-redirect" class="btn btn-primary" type="button">View Network</button>
+        </form>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
