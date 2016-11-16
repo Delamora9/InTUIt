@@ -16,5 +16,5 @@ app.on('ready', function() {
   });
   win.loadURL('file://' + __dirname + '/loginIndex.html');
   win.focus();
-  win.webContents.openDevTools(); //opens web dev tools in window
+ // win.webContents.openDevTools(); //opens web dev tools in window
 });

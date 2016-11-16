@@ -1,4 +1,3 @@
-
   // create an array with nodes
   var nodes = new vis.DataSet([
     {id: 1, label: 'Area1', group: 'areas'},
@@ -16,26 +15,25 @@
 		{id: 13, label: 'ACU10', group: 'acu'},
 		{id: 14, label: 'ACU11', group: 'acu'},
 		{id: 15, label: 'ACU12', group: 'acu'}
-  ]);
-	
+  ]);	
 
   // create an array with edges
   var edges = new vis.DataSet([
-    {from: 1, to: 2},
-    {from: 1, to: 3},
-    {from: 2, to: 3},
-   	{from: 1, to: 4},
-		{from: 1, to: 5},
-		{from: 1, to: 6},
-		{from: 2, to: 7},
-		{from: 2, to: 8},
-		{from: 2, to: 9},
-		{from: 2, to: 10},
-		{from: 2, to: 11},
-		{from: 2, to: 12},
-		{from: 3, to: 13},
-		{from: 3, to: 14},
-		{from: 3, to: 15},
+    {from: 1, to: 2, id: 'Area1-Area2'},
+    {from: 1, to: 3, id: 'Area1-Area3'},
+    {from: 2, to: 3, id: 'Area2-Area3'},
+   	{from: 1, to: 4, id: 'Area1-ACU1'},
+		{from: 1, to: 5, id: 'Area1-ACU2'},
+		{from: 1, to: 6, id: 'Area1-ACU3'},
+		{from: 2, to: 7, id: 'Area2-ACU4'},
+		{from: 2, to: 8, id: 'Area2-ACU5'},
+		{from: 2, to: 9, id: 'Area2-ACU6'},
+		{from: 2, to: 10, id: 'Area2-ACU7'},
+		{from: 2, to: 11, id: 'Area2-ACU8'},
+		{from: 2, to: 12, id: 'Area2-ACU9'},
+		{from: 3, to: 13, id: 'Area3-ACU10'},
+		{from: 3, to: 14, id: 'Area3-ACU11'},
+		{from: 3, to: 15, id: 'Area3-ACU12'},
   ]);
 
   // create a network
@@ -45,9 +43,11 @@
     edges: edges
   };
 	
+	//assign behavior and attributes to nodes,edges, and groups
   var options = {
 		nodes: {
-			color: {hover: {border: 'red'}}
+      borderWidth: 3,
+			color: {hover: {border: '#34c213'}}
 		},
 		edges: {
 			color: 'white'
@@ -72,10 +72,19 @@
 			navigationButtons: true
 		}
 	};
-	
+
   var network = new vis.Network(container, data, options);
-	
-	
+
+	//function that reacts to selecting a node
 	network.on('select', function(params) {
-        document.getElementById('selection').innerHTML = 'Selection: ' + params.nodes;
-      });
+        $('#selection').empty();
+        if(params.nodes.length > 0){
+          $('#selection').append('Node: ' + nodes.get(params.nodes)[0].label);
+        }
+        else if(params.edges.length > 0) {
+          $('#selection').append('Edge: ' + params.edges);
+        }
+        else {
+          $('#selection').append($('#network-name').html());
+        }
+  });

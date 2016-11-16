@@ -10,10 +10,9 @@
     <title>IoT Policy Management System</title>
     <!-- Style imports -->
     <link rel="stylesheet" type="text/css" href="./css/bootstrap.min.css">
-		<link rel="stylesheet" type="text/css" href="./css/vis.css">
     <link rel="stylesheet" type="text/css" href="./css/homepage.css">
     <link rel="stylesheet" type="text/css" href="./css/DataTables.css">
-		<link rel="stylesheet" type="text/css" href="./css/NetworkVis.css">
+		<link rel="stylesheet" type="text/css" href="./css/vis.css">
   </head>
 
   <body>
@@ -62,12 +61,10 @@
             <li class="nav-item">
               <a class="nav-link" data-toggle="tab" href="#networkView" role="tab">View Network</a>
             </li>
-          </ul>
-					
+          </ul>					
           <!-- Tab Content -->
-          <div class="tab-content">
-					
-						<!--Current Network Changes-->
+          <div class="tab-content">					
+						<!--Current Network Changes Tab-->
             <div class="tab-pane active" id="changes" role="tabpanel">
               <h2> Current Changes to Network </h2> <br>
 
@@ -76,17 +73,17 @@
                   <tr><th>Date</th><th>Change Type</th><th>Description</th></tr>
                 <thead>
                 <tbody>
-
+								
                 </tbody>
               </table>
             </div>
 						
 						<!--View Network Tab-->
             <div class="tab-pane max-height" id="networkView" role="tabpanel">
-													
+							<h2 id="display-name"></h2>						
 							<div id="mynetwork">
 								<div class="vis-network max-height" tabindex="900">
-									<canvas class="network-canvas">
+									<canvas class="network-canvas" id="visual">
 									</canvas>
 									<div class="vis-navigation">
 										<div class="vis-button vis-up" style="touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></div>
@@ -98,12 +95,10 @@
 										<div class="vis-button vis-zoomExtends" style="touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></div>
 									</div>
 								</div>
-							</div>
-							
+							</div>							
 							<div id="info">
-							<p id="selection"></p>
-							</div>
-							
+								<p id="selection"></p>
+							</div>							
 						</div>
 						<!--End View Network Tab-->
           </div>
@@ -251,12 +246,12 @@
 	<!------------------------ End Modals ----------------------------->
 
     <!-- Script imports upon page load completion -->
+		<script src="./js/network_classes.js"></script>
     <script src="./js/homepage.js"></script>
     <script src="./js/tether.min.js"></script>
     <script src="./js/DataTables.js"></script>
     <script src="./js/bootstrap.min.js"></script>
-		<script src="./js/network_classes.js"></script>
-		<script src="./js/vis-network.min.js"></script>
+		<script src="./js/vis.js"></script>
 		<script src="./js/network_vis.js"></script>
   </body>
 </html>

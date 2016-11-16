@@ -32,6 +32,7 @@ $(document).ready(function() {
   //Populate the Username and Network Fields bassed on Login
   $('#user-name').html('User: ' + username);
   $('#network-name').html('Network: ' + networkName);
+	$('#display-name').html(networkName);
 
   //Creates the changes datatable
   changesTable = $('#changesTable').DataTable({
