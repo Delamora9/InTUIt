@@ -23,7 +23,7 @@ var Network = function (networkName, userName) {
     }
 
     this.removeArea = function removeArea(areaName) {
-        for(var i = 1; i < this.areaList.length; i++) {
+        for(var i = 0; i < this.areaList.length; i++) {
             if(this.areaList[i].areaName == areaName)
                 this.areaList.splice(i, 1);
         }

@@ -1,8 +1,7 @@
 /*****************************************************************************************************************
-Programmed by: Christopher Franklyn
-Description: This file contains important functions and resources for the entire UI, including cloud storage info,
-             functions for interacting with the cloud service, and code dealing with IPMS settings (interval, etc.
-Last Modified: 11/2/2016
+Programmed by: Christopher Franklyn, Jess Geiger, Nick Delamora, Keith Cissell
+Description: This file contains important functions and resources for the entire UI
+Last Modified: 11/16/2016
 ******************************************************************************************************************/
 
 //this command loads jquery properly
@@ -20,6 +19,7 @@ var areaList = new Array(); //Array of all areas in the Network
 var deviceList = new Array(); //Array of all ACUs in the Network
 
 var deviceTable;
+var areaTable;
 var changesTable;
 
 
@@ -57,9 +57,19 @@ $(document).ready(function() {
   //event fires upon adding an area
   $('#addAreaForm').submit(function(e){
     e.preventDefault(); //prevent form from redirect
-	addArea();
-    this.reset(); //resets the fields within the form
-	$('#areaName').focus();
+    setTimeout(function(){ //allow addDevice to execute before refresh
+      areaTable.ajax.reload();
+    }, 100);
+	  addArea($('#areaName').val());
+    $('#addAreaForm')[0].reset(); //reset form fields
+  	$('#areaName').focus();
+  });
+
+  //event fires upon removing an area
+  $('#removeAreaForm').submit(function(e){
+    e.preventDefault(); //prevent form from redirect
+    removeArea($('#areaSelect3').val());
+    $('#removeAreaForm')[0].reset(); //reset form fields
   });
 
   //event fires upon adding a device
@@ -92,16 +102,67 @@ $(document).ready(function() {
 
 
 //Adding an area into the network
-function addArea() {
-  areaList.push(new Area($('#areaName').val()));
+function addArea(areaName) {
+  areaList.push(new Area(areaName));
   //update the slectable list of areas in the add acu form
   $('#areaSelect').empty();
+  $('#areaSelect').append('<option value=\"none\" selected>Select an Area</option>');
   $('#areaSelect2').empty();
   $('#areaSelect2').append('<option value=\"none\" selected>Select an Area</option>');
+  $('#areaSelect3').empty();
   for (var i = 0; i < areaList.length; i++) {
 	  var area = areaList[i];
 	  $('#areaSelect').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
     $('#areaSelect2').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
+    $('#areaSelect3').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
+  }
+
+  var stream = fs.createWriteStream('./resources/app/json/area_devices/' + areaName + '-devices.json');
+  stream.write(JSON.stringify({'deviceData':[]}));
+  stream.end();
+
+  var date = new Date();
+  $.getJSON("./json/areas.json", function(json) {
+    var deviceJSON = [date.toLocaleString(), areaName];
+    json.areaData.push(deviceJSON);
+    var stream = fs.createWriteStream('./resources/app/json/areas.json');
+    stream.write(JSON.stringify(json));
+    stream.end();
+  });
+}
+
+//Removing an Area from the network
+function removeArea(areaName) {
+  for(var i = 0; i < this.areaList.length; i++) {
+      if(this.areaList[i].areaName == areaName)
+          this.areaList.splice(i, 1);
+  }
+
+  if(areaList.length == 0){
+    alert("no more areas");
+    $('#remove-area-modal').modal('hide');
+  }
+
+  $.getJSON("./json/areas.json", function(json) {
+    for (var i = 0; i < json.areaData.length; i++){
+      if(areaName == json.areaData[i][1]){
+        json.areaData.splice(i, 1); //this part is not working yet and needs to be modified
+      }
+    }
+    var stream = fs.createWriteStream('./resources/app/json/areas.json');
+    stream.write(JSON.stringify(json));
+    stream.end();
+  });
+
+  $('#areaSelect').empty();
+  $('#areaSelect2').empty();
+  $('#areaSelect2').append('<option value=\"none\" selected>Select an Area</option>');
+  $('#areaSelect3').empty();
+  for (var i = 0; i < areaList.length; i++) {
+	  var area = areaList[i];
+	  $('#areaSelect').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
+    $('#areaSelect2').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
+    $('#areaSelect3').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
   }
 }
 
@@ -114,10 +175,10 @@ function addDevice() {
   var date = new Date();
 
   //function call to add the device to the stored json of devices
-  $.getJSON("./json/devices.json", function(json) {
+  $.getJSON("./json/area_devices/" + deviceArea.areaName + "-devices.json", function(json) {
     var deviceJSON = [date.toLocaleString(), $('#deviceName').val(), $('#deviceStates').val(), $('#deviceActions').val(), $('#deviceDependencies').val()];
-    json.tableData.push(deviceJSON);
-    var stream = fs.createWriteStream('./resources/app/json/devices.json');
+    json.deviceData.push(deviceJSON);
+    var stream = fs.createWriteStream('./resources/app/json/area_devices/' + deviceArea.areaName + '-devices.json');
     stream.write(JSON.stringify(json));
     stream.end();
   });
@@ -130,9 +191,9 @@ function removeDevice() {
     removeACUArea.acuList.splice(index, 1);
   }
   $.getJSON("./json/devices.json", function(json) {
-    for (var i = 0; i < json.tableData.length; i++){
-      if(removeACU.acuName == json.tableData[i][1]){
-        delete json.tableData[i]; //this part is not working yet and needs to be modified
+    for (var i = 0; i < json.deviceData.length; i++){
+      if(removeACU.acuName == json.deviceData[i][1]){
+        delete json.deviceData[i]; //this part is not working yet and needs to be modified
       }
     }
     removeACU = '';
@@ -173,6 +234,29 @@ $('#submitNDF').click(function buildNDF() {
   $('#ndfUpdateTime').html('<span class="white">NDF for ' + networkName + " updated on " + date.toLocaleString() + "</span>");
 });
 
+//Prefires for when user clicks Add Area button
+$('#add-area-button').click(function() {
+  if (!($.fn.dataTable.isDataTable('#areaTable'))){ //if the datatable isn't created, make it
+    areaTable = $('#areaTable').DataTable({
+      "paging": true,
+      "iDisplayLength": 5,
+      "lengthMenu": [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
+      "responsive": true,
+      "autoWidth": false,
+      "language": {"emptyTable": "No Areas have been created"},
+      "order": [[0, 'desc']],
+      "columns": [
+          { "width": "50%" },
+          { "width": "50%"}
+      ],
+      "ajax": {
+        "url": './json/areas.json',
+        "dataSrc": 'areaData'
+      }
+    });
+  }
+});
+
 //Prefires for when user clicks Remove Area button
 $('#remove-area-button').click(function() {
   if (areaList.length == 0) {
@@ -195,6 +279,7 @@ $('#add-device-button').click(function() {
     $('#add-device-modal').modal({
       focus: true
     });
+    $('#areaDeviceDisplay').hide();
   }
 
   if (!($.fn.dataTable.isDataTable('#deviceTable'))){ //if the datatable isn't created, make it
@@ -206,6 +291,7 @@ $('#add-device-button').click(function() {
       "autoWidth": false,
       "language": {"emptyTable": "No ACUs have been created"},
       "order": [[0, 'desc']],
+      "bDestroy": true,
       "columns": [
           { "width": "12%" },
           { "width": "15%" },
@@ -215,7 +301,7 @@ $('#add-device-button').click(function() {
       ],
   	  "ajax": {
   	    "url": './json/devices.json',
-  		  "dataSrc": 'tableData'
+  		  "dataSrc": 'deviceData'
   	  }
     });
   }
@@ -245,6 +331,37 @@ $('#add-policy-button').click(function() {
   }
 });
 
+$('#areaSelect').change(function() {
+  loadAreaDeviceTable($('#areaSelect').val());
+  $('#areaDeviceDisplay').show();
+});
+
+function loadAreaDeviceTable(areaName){
+  if ($.fn.dataTable.isDataTable('#deviceTable')){ //if the datatable is created, destroy it
+    $('#deviceTable').dataTable().fnDestroy();
+  }
+  deviceTable = $('#deviceTable').DataTable({
+    "paging": true,
+    "iDisplayLength": 5,
+    "lengthMenu": [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
+    "responsive": true,
+    "autoWidth": false,
+    "language": {"emptyTable": "No ACUs have been created"},
+    "order": [[0, 'desc']],
+    "columns": [
+        { "width": "12%" },
+        { "width": "15%" },
+        { "width": "20%" },
+        { "width": "28%" },
+        { "width": "25%" }
+    ],
+    "ajax": {
+      "url": './json/area_devices/' + areaName + '-devices.json',
+      "dataSrc": 'deviceData'
+    }
+  });
+}
+
 //event triggered by selecting an area in remove device modal
 $('#areaSelect2').change(function() {
   $('#deviceSelect').empty();
@@ -260,6 +377,7 @@ $('#areaSelect2').change(function() {
 $('#deviceSelect').change(function() {
   removeACU = findACU(this.options[this.selectedIndex].value, removeACUArea);
 });
+
 
 
 /********************** GENERAL PROGRAM METHOD CALLS ***********************/

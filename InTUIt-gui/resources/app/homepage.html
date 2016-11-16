@@ -133,6 +133,17 @@
                 <label for="areaName">Area Name:</label>
                 <input type="text" class="form-control" id="areaName" placeholder="Cheek212" required>
               </div>
+              <br>
+              <table id="areaTable" class="display compact">
+                <thead>
+                  <tr>
+                    <th>Date Added</th>
+                    <th>Area Name</th>
+                  </tr>
+                <thead>
+                <tbody>
+                </tbody>
+              </table>
               <hr>
               <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
               <input type="submit" class="btn btn-primary" value="Add Area">
@@ -154,15 +165,12 @@
             <h4 class="modal-title text-center" id="myModalLabel2">Remove an Area</h4>
           </div>
           <div class="modal-body">
-
             <form id="removeAreaForm">
               <div class="form-group">
-                <label for="areaName">Available Areas:</label>
-                <select>
-    				//foreach area in network,
-    				<option value="Area1">Area 1</option>
-    				<option value="Area2">Area 2</option>
-    			</select>
+                <label for="areaSelect3">Available Areas:</label>
+                <select class="form-control" id="areaSelect3">
+        				  <option value="none" selected>No Areas Created</option>
+        				</select>
               </div>
               <hr>
               <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
@@ -193,6 +201,7 @@
 				  <option value="none" selected>No Areas Created</option>
 				</select>
 			  </div>
+        <div id="areaDeviceDisplay">
               <div class="form-group">
                 <div class="row">
                   <div class ="col-lg-3">
@@ -232,6 +241,7 @@
               <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
               <input type="submit" class="btn btn-primary" value="Add Device">
             </form>
+          </div>
           </div>
         </div>
       </div>
