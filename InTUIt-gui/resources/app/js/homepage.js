@@ -1,8 +1,7 @@
 /*****************************************************************************************************************
-Programmed by: Christopher Franklyn
-Description: This file contains important functions and resources for the entire UI, including cloud storage info,
-             functions for interacting with the cloud service, and code dealing with IPMS settings (interval, etc.
-Last Modified: 9/19/2016
+Programmed by: Christopher Franklyn, Jess Geiger, Nick Delamora, Keith Cissell, Mitch Marlow
+Description: This file contains important functions and resources for the entire UI
+Last Modified: 11/16/2016
 ******************************************************************************************************************/
 
 //this command loads jquery properly
@@ -23,115 +22,8 @@ var removeACU; //holds value of ACU to remove
 var removeACUArea; //holds value of area ACU to remove is in
 
 var deviceTable;
+var areaTable;
 var changesTable;
-
-
-//Network Class----------------------------------------------------------------
-var Network = function (networkName) {
-    this.networkName = networkName;
-    this.areaList = new Array(); //Array of all areas in the Network
-
-    this.addArea = function addArea(Area) {
-        this.areaList.push(Area);
-    }
-
-    this.printNetwork = function printNetwork() {
-        var areaString = "{"
-        for (var i; i < currentNetwork.areaList.length; i++) {
-            areaString += this.areaList[i].printArea();
-        }
-        areaString += "}";
-    }
-
-    this.printNetworkPolicies = function printNetworkPolicies() {
-        var areaString = "{"
-        for (var i; i < currentNetwork.areaList.length; i++) {
-            areaString += this.areaList[i].printAreaPolicies();
-        }
-        areaString += "}";
-    }
-}
-//-----------------------------------------------------------------------------
-
-
-//Area Class-------------------------------------------------------------------
-var Area = function(areaName) {
-    this.areaName = areaName;
-    this.acuList = new Array(); //Array of all ACUs in the Area
-
-    this.addACU = function addACU(acu) {
-        this.acuList.push(acu);
-    }
-
-    this.printArea = function printArea() {
-        var areaString = "\"" + this.areaName + "\": {";
-        for(var i = 0; i < this.acuList.length; i++){
-            areaString += this.acuList[i].printACU();
-        }
-        areaString += "},"
-        return areaString;
-    }
-
-    this.printAreaPolicies = function printAreaPolicies() {
-        var areaString = "\"" + this.areaName + "\": {";
-        for(var i = 0; i < this.acuList.length; i++){
-            areaString += this.acuList[i].printACUPolicies();
-        }
-        areaString += "}"
-        return areaString;
-    }
-}
-//-----------------------------------------------------------------------------
-
-
-//ACU Class--------------------------------------------------------------------
-var ACU = function (acuName, states, dependencies, actions, area) {
-    this.acuName = acuName;
-    this.states = states;
-    this.dependencies = dependencies;
-    this.actions = actions;
-    this.area = area;
-    this.policyList = new Array(); //Array of all Policies associated to ACU
-
-    this.addPolicy = function addPolicy(Policy) {
-        this.policyList.push(Policy);
-    }
-
-    this.printACU = function printACU(){
-        return "\"" + this.acuName + "\": {\"Dependencies\": [" + this.dependencies + "], \"States\": [" + this.states + "], \"Actions\": [" + this.actions +
-		"]},";
-    }
-
-    this.printACUPolicies = function printACUPolicies() {
-        var ACUString = "\"" + this.acuName + "\" :[";
-        for(var i = 0; i < this.policyList.length; i++){
-            ACUString += this.policyList[i].printPolicy();   //*****Coma Syntax Error for NDF*****
-        }
-        ACUString += "]"
-        return ACUString;
-    }
-}
-//-----------------------------------------------------------------------------
-
-
-//Policy Class-----------------------------------------------------------------
-var Policy = function (area, device, givenStates, command) {
-    this.area = area;
-    this.device = device;
-    this.givenStates, givenStates;
-    this.command = command;
-
-    this.printPolicy = function printPolicy() {
-        return "\"Given {" + givenStates + "} associate " + command + "\"";
-    }
-
-    //Display function for possible 'Pending Commands' implimentation
-    this.displayPolicy = function displayPolicy(){
-        return "\"" + area + "\" :{\"" + device + "\": [\"Given {" + givenStates +
-            "} associate " + command + "\"]}";
-    }
-}
-//-----------------------------------------------------------------------------
 
 
 //script that executes once homepage is fully loaded
@@ -143,7 +35,8 @@ $(document).ready(function() {
 
   //Populate the Username and Network Fields bassed on Login
   $('#user-name').html('User: ' + username);
-  $('#network-name').html('Network: ' + networkName);
+  $('#panelTitle').html('Network: ' + networkName);
+  $('#displayTitle').html('Network: ' + networkName);
 
   //Creates the changes datatable
   changesTable = $('#changesTable').DataTable({
@@ -165,6 +58,24 @@ $(document).ready(function() {
     }
   });
 
+  //event fires upon adding an area
+  $('#addAreaForm').submit(function(e){
+    e.preventDefault(); //prevent form from redirect
+    setTimeout(function(){ //allow addDevice to execute before refresh
+      areaTable.ajax.reload();
+    }, 100);
+	  addArea($('#areaName').val());
+    $('#addAreaForm')[0].reset(); //reset form fields
+  	$('#areaName').focus();
+  });
+
+  //event fires upon removing an area
+  $('#removeAreaForm').submit(function(e){
+    e.preventDefault(); //prevent form from redirect
+    removeArea($('#areaSelect3').val());
+    $('#removeAreaForm')[0].reset(); //reset form fields
+  });
+
   //event fires upon adding a device
   $('#addDeviceForm').submit(function(e){
     e.preventDefault(); //prevent form from redirect
@@ -173,15 +84,15 @@ $(document).ready(function() {
       $('#addDeviceForm')[0].reset(); //reset form fields
     }, 100);
     addDevice();
-	$('#deviceName').focus();
+  $('#deviceName').focus();
   });
 
-  //event fires upon adding an area
-  $('#addAreaForm').submit(function(e){
+  //event fires upon removing a device
+  $('#removeDeviceForm').submit(function(e){
     e.preventDefault(); //prevent form from redirect
-	addArea();
-    this.reset(); //resets the fields within the form
-	$('#areaName').focus();
+    if (confirm('Are you sure you want to remove ' + removeACU.acuName + ' from ' + removeACUArea.areaName + '?')) {
+      removeDevice();
+    }
   });
 
   //event fires upon adding a policy
@@ -191,27 +102,80 @@ $(document).ready(function() {
 	this.reset();
 	$('#policyArea').focus();
   });
-});
 
-//event fires upon removing a device
-$('#removeDeviceForm').submit(function(e){
-  e.preventDefault(); //prevent form from redirect
-  if (confirm('Are you sure you want to remove ' + removeACU.acuName + ' from ' + removeACUArea.areaName + '?')) {
-    removeDevice();
-  }
+  //event fires upon logging out
+  $('#removeAreaForm').submit(function(e){
+    e.preventDefault();
+    console.log("in logout function");
+    userName="";
+    networkName="";
+    window.location.href="./loginIndex.html";
+  });
 });
 
 
 //Adding an area into the network
 function addArea() {
   areaList.push(new Area($('#areaName').val()));
+  //update the slectable list of areas in the add acu form
   $('#areaSelect').empty();
+  $('#areaSelect').append('<option value=\"none\" selected>Select an Area</option>');
   $('#areaSelect2').empty();
   $('#areaSelect2').append('<option value=\"none\" selected>Select an Area</option>');
+  $('#areaSelect3').empty();
   for (var i = 0; i < areaList.length; i++) {
 	  var area = areaList[i];
 	  $('#areaSelect').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
 	  $('#areaSelect2').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
+    $('#areaSelect3').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
+  }
+  var stream = fs.createWriteStream('./resources/app/json/area_devices/' + areaName + '-devices.json');
+  stream.write(JSON.stringify({'deviceData':[]}));
+  stream.end();
+
+  var date = new Date();
+  $.getJSON("./json/areas.json", function(json) {
+    var deviceJSON = [date.toLocaleString(), areaName];
+    json.areaData.push(deviceJSON);
+    var stream = fs.createWriteStream('./resources/app/json/areas.json');
+    stream.write(JSON.stringify(json));
+    stream.end();
+  });
+  addAreaNode($('#areaName').val());
+}
+
+//Removing an Area from the network
+function removeArea(areaName) {
+  for(var i = 0; i < this.areaList.length; i++) {
+      if(this.areaList[i].areaName == areaName)
+          this.areaList.splice(i, 1);
+  }
+
+  if(areaList.length == 0){
+    alert("no more areas");
+    $('#remove-area-modal').modal('hide');
+  }
+
+  $.getJSON("./json/areas.json", function(json) {
+    for (var i = 0; i < json.areaData.length; i++){
+      if(areaName == json.areaData[i][1]){
+        json.areaData.splice(i, 1); //this part is not working yet and needs to be modified
+      }
+    }
+    var stream = fs.createWriteStream('./resources/app/json/areas.json');
+    stream.write(JSON.stringify(json));
+    stream.end();
+  });
+
+  $('#areaSelect').empty();
+  $('#areaSelect2').empty();
+  $('#areaSelect2').append('<option value=\"none\" selected>Select an Area</option>');
+  $('#areaSelect3').empty();
+  for (var i = 0; i < areaList.length; i++) {
+	  var area = areaList[i];
+	  $('#areaSelect').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
+    $('#areaSelect2').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
+    $('#areaSelect3').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
   }
 }
 
@@ -219,26 +183,19 @@ function addArea() {
 function addDevice() {
   var tempDevice = new ACU($('#deviceName').val(), $('#deviceStates').val(), $('#deviceDependencies').val(), $('#deviceActions').val(), $('#areaSelect').val());
   var deviceArea = findArea($('#areaSelect').val());
-  deviceArea.acuList.push(tempDevice);
+  deviceArea.addACU(tempDevice);
 
   var date = new Date();
 
   //function call to add the device to the stored json of devices
-  $.getJSON("./json/devices.json", function(json) {
+  $.getJSON("./json/area_devices/" + deviceArea.areaName + "-devices.json", function(json) {
     var deviceJSON = [date.toLocaleString(), $('#deviceName').val(), $('#deviceStates').val(), $('#deviceActions').val(), $('#deviceDependencies').val()];
-    json.tableData.push(deviceJSON);
-    var stream = fs.createWriteStream('./resources/app/json/devices.json');
+    json.deviceData.push(deviceJSON);
+    var stream = fs.createWriteStream('./resources/app/json/area_devices/' + deviceArea.areaName + '-devices.json');
     stream.write(JSON.stringify(json));
     stream.end();
   });
-}
-
-//Adding a policy to an existing ACU
-function addPolicy() {
-  var tempPolicy = new Policy($('#policyArea').val(), $('#policyDevice').val(), $('#givenStates').val(), $('#associatedCommand').val());
-  var policyArea = findArea($('#policyArea').val());
-  var policyACU = findACU($('#policyDevice').val(), policyArea);
-  policyACU.addPolicy(tempPolicy);
+  addDeviceNode($('#deviceName').val(), $('#areaSelect').val());
 }
 
 //function to remove a device
@@ -248,9 +205,9 @@ function removeDevice() {
     removeACUArea.acuList.splice(index, 1);
   }
   $.getJSON("./json/devices.json", function(json) {
-    for (var i = 0; i < json.tableData.length; i++){
-      if(removeACU.acuName == json.tableData[i][1]){
-        delete json.tableData[i]; //this part is not working yet and needs to be modified
+    for (var i = 0; i < json.deviceData.length; i++){
+      if(removeACU.acuName == json.deviceData[i][1]){
+        delete json.deviceData[i]; //this part is not working yet and needs to be modified
       }
     }
     removeACU = '';
@@ -262,6 +219,14 @@ function removeDevice() {
     var device = removeACUArea.acuList[i];
     $('#deviceSelect').append('<option value="' + device.acuName + '">' + device.acuName +'</option>');
   }
+}
+
+//Adding a policy to an existing ACU
+function addPolicy() {
+  var tempPolicy = new Policy($('#policyArea').val(), $('#policyDevice').val(), $('#givenStates').val(), $('#associatedCommand').val());
+  var policyArea = findArea($('#policyArea').val());
+  var policyACU = findACU($('#policyDevice').val(), policyArea);
+  policyACU.addPolicy(tempPolicy);
 }
 
 //Function to construct the NDF file for a user network
@@ -277,6 +242,45 @@ $('#submitNDF').click(function buildNDF() {
   }
   stream.write('}')
   stream.end();
+
+  //visual update of submit below submit button
+  var date = new Date();
+  $('#ndfUpdateTime').html('<span class="white">NDF for ' + networkName + " updated on " + date.toLocaleString() + "</span>");
+});
+
+//Prefires for when user clicks Add Area button
+$('#add-area-button').click(function() {
+  if (!($.fn.dataTable.isDataTable('#areaTable'))){ //if the datatable isn't created, make it
+    areaTable = $('#areaTable').DataTable({
+      "paging": true,
+      "iDisplayLength": 5,
+      "lengthMenu": [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
+      "responsive": true,
+      "autoWidth": false,
+      "language": {"emptyTable": "No Areas have been created"},
+      "order": [[0, 'desc']],
+      "columns": [
+          { "width": "50%" },
+          { "width": "50%"}
+      ],
+      "ajax": {
+        "url": './json/areas.json',
+        "dataSrc": 'areaData'
+      }
+    });
+  }
+});
+
+//Prefires for when user clicks Remove Area button
+$('#remove-area-button').click(function() {
+  if (areaList.length == 0) {
+    alert("No areas have been created. Please create one");
+  }
+  else {
+    $('#remove-area-modal').modal({
+      focus: true
+    });
+  }
 });
 
 //Create Device Datatable when button to summon modal is clicked
@@ -289,6 +293,7 @@ $('#add-device-button').click(function() {
     $('#add-device-modal').modal({
       focus: true
     });
+    $('#areaDeviceDisplay').hide();
   }
 
   if (!($.fn.dataTable.isDataTable('#deviceTable'))){ //if the datatable isn't created, make it
@@ -300,6 +305,7 @@ $('#add-device-button').click(function() {
       "autoWidth": false,
       "language": {"emptyTable": "No ACUs have been created"},
       "order": [[0, 'desc']],
+      "bDestroy": true,
       "columns": [
           { "width": "12%" },
           { "width": "15%" },
@@ -309,15 +315,27 @@ $('#add-device-button').click(function() {
       ],
   	  "ajax": {
   	    "url": './json/devices.json',
-  		  "dataSrc": 'tableData'
+  		  "dataSrc": 'deviceData'
   	  }
     });
   }
 });
 
+//Prefires for when user clicks Remove Device button
+$('#remove-device-button').click(function() {
+  if (areaList.length == 0) {
+    alert("No areas have been created. Please create one");
+  }
+  else {
+    $('#remove-device-modal').modal({
+      focus: true
+    });
+  }
+});
+
+//Prefires for when user clicks Add Policy button
 $('#add-policy-button').click(function() {
   if (areaList.length == 0) {
-    //e.preventDefault();
     alert("No areas have been created. Please create one");
   }
   else {
@@ -327,17 +345,55 @@ $('#add-policy-button').click(function() {
   }
 });
 
-$('#remove-device-button').click(function() {
-  if (areaList.length == 0) {
-    //e.preventDefault();
-    alert("No devices have been created. Please create one");
-  }
-  else {
-    $('#remove-device-modal').modal({
-      focus: true
-    });
+//Prefires for when user clicks Logout button
+$('#logout-button').click(function() {
+  if (confirm('Are you sure you want to logout?')) {
+    if (confirm('Warning: any unsaved changes will be lost')){
+      username = "";
+      networkName = "";
+      window.location.href="./loginIndex.html";
+    }
   }
 });
+
+//Function to switch networks
+$('#switch-network').click(function() {
+  if (confirm('Are you sure you want to switch networks?')) {
+    networkName = "";
+    window.location.href="./loginIndex.html";
+  }
+});
+
+$('#areaSelect').change(function() {
+  loadAreaDeviceTable($('#areaSelect').val());
+  $('#areaDeviceDisplay').show();
+});
+
+function loadAreaDeviceTable(areaName){
+  if ($.fn.dataTable.isDataTable('#deviceTable')){ //if the datatable is created, destroy it
+    $('#deviceTable').dataTable().fnDestroy();
+  }
+  deviceTable = $('#deviceTable').DataTable({
+    "paging": true,
+    "iDisplayLength": 5,
+    "lengthMenu": [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
+    "responsive": true,
+    "autoWidth": false,
+    "language": {"emptyTable": "No ACUs have been created"},
+    "order": [[0, 'desc']],
+    "columns": [
+        { "width": "12%" },
+        { "width": "15%" },
+        { "width": "20%" },
+        { "width": "28%" },
+        { "width": "25%" }
+    ],
+    "ajax": {
+      "url": './json/area_devices/' + areaName + '-devices.json',
+      "dataSrc": 'deviceData'
+    }
+  });
+}
 
 //event triggered by selecting an area in remove device modal
 $('#areaSelect2').change(function() {
@@ -355,6 +411,9 @@ $('#deviceSelect').change(function() {
   removeACU = findACU(this.options[this.selectedIndex].value, removeACUArea);
 });
 
+
+
+/********************** GENERAL PROGRAM METHOD CALLS ***********************/
 //Finds a created area in the list of areas
 function findArea(name) {
 	for (var i = 0; i < areaList.length; i++) {

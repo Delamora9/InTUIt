@@ -1,26 +1,26 @@
   // create an array with nodes
   var nodes = new vis.DataSet([
-    {id: 1, label: 'Area1', group: 'areas'},
-    {id: 2, label: 'Area2', group: 'areas'},
-    {id: 3, label: 'Area3', group: 'areas'},
-		{id: 4, label: 'ACU1', group: 'acu'},
-		{id: 5, label: 'ACU2', group: 'acu'},
-		{id: 6, label: 'ACU3', group: 'acu'},
-		{id: 7, label: 'ACU4', group: 'acu'},
-		{id: 8, label: 'ACU5', group: 'acu'},
-		{id: 9, label: 'ACU6', group: 'acu'},
-		{id: 10, label: 'ACU7', group: 'acu'},
-		{id: 11, label: 'ACU8', group: 'acu'},
-		{id: 12, label: 'ACU9', group: 'acu'},
-		{id: 13, label: 'ACU10', group: 'acu'},
-		{id: 14, label: 'ACU11', group: 'acu'},
-		{id: 15, label: 'ACU12', group: 'acu'}
+    /*{id: 'Area1', label: 'Area1', group: 'areas'},
+    {id: 'Area2', label: 'Area2', group: 'areas'},
+    {id: 'Area3', group: 'areas'},
+		{id: 'ACU1', group: 'acu'},
+		{id: 'ACU2', group: 'acu'},
+		{id: 'ACU3', group: 'acu'},
+		{id: 'ACU4', group: 'acu'},
+		{id: 'ACU5', group: 'acu'},
+		{id: 'ACU6', group: 'acu'},
+		{id: 'ACU7', group: 'acu'},
+		{id: 'ACU8', group: 'acu'},
+		{id: 'ACU9', group: 'acu'},
+		{id: 'ACU10', group: 'acu'},
+		{id: 'ACU11', group: 'acu'},
+		{id: 'ACU12', group: 'acu'}*/
   ]);
 
   // create an array with edges
   var edges = new vis.DataSet([
-    {from: 1, to: 2, id: 'Area1-Area2'},
-    {from: 1, to: 3, id: 'Area1-Area3'},
+    {from: 'Area1', to: 'Area2', id: 'Area1-Area2'},
+    /*{from: 1, to: 3, id: 'Area1-Area3'},
     {from: 2, to: 3, id: 'Area2-Area3'},
    	{from: 1, to: 4, id: 'Area1-ACU1'},
 		{from: 1, to: 5, id: 'Area1-ACU2'},
@@ -33,7 +33,7 @@
 		{from: 2, to: 12, id: 'Area2-ACU9'},
 		{from: 3, to: 13, id: 'Area3-ACU10'},
 		{from: 3, to: 14, id: 'Area3-ACU11'},
-		{from: 3, to: 15, id: 'Area3-ACU12'},
+		{from: 3, to: 15, id: 'Area3-ACU12'},*/
   ]);
 
   // create a network
@@ -49,7 +49,8 @@
 			color: {hover: {border: 'red'}}
 		},
 		edges: {
-			color: 'white'
+			color: 'white',
+      width: 3
 		},
 		groups: {
 			acu: {
@@ -87,3 +88,16 @@
           $('#selection').append($('#network-name').html());
         }
   });
+
+  function addDeviceNode(name, area){
+    nodes.add({id:name, label:name, group:'acu'});
+    edges.add({from: name, to: area, id:area + '-' + name})
+    network.redraw();
+    network.fit();
+  }
+
+  function addAreaNode(name){
+    nodes.add({id:name, label:name, group:'areas'});
+    network.redraw();
+    network.fit();
+  }

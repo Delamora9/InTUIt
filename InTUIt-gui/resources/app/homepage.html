@@ -11,29 +11,50 @@
     <!-- Style imports -->
     <link rel="stylesheet" type="text/css" href="./css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="./css/homepage.css">
-    <link rel="stylesheet" type="text/css" href="./css/DataTables.css">
     <link rel="stylesheet" type="text/css" href="./css/vis.css" />
+    <link rel="stylesheet" type="text/css" href="./css/NetworkVis.css">
+    <link rel="stylesheet" type="text/css" href="./css/DataTables.css">
   </head>
 
-  <body>
-    <!--Top Navbar -->
-    <nav class="navbar navbar-dark bg-inverse">
-      <ul class="nav navbar-nav">
-        <li class="navbar-brand">InTUIt IoT Network Creator </li>
+  <!-- Top Navbar -->
+  <header>
+	<nav class="navbar navbar-dark bg-inverse">
+    <ul class="nav navbar-nav">
+      <li class="navbar-brand">InTUIt IoT Network Creator </li>
+			<div class="container">
         <div class= "nav-stats">
-          <li id="user-name"></li>
-          <li id="network-name"></li>
-        </div>
-      </ul>
-    </nav>
+				  <div class="panel-group">
+					  <div class="panel panel-default">
+						  <div class="panel-heading">
+							  <h4 class="panel-title">
+								  <a class="logout-button" id="panelTitle" data-toggle="collapse" href="#collapsemenu"></a>
+							  </h4>
+						  </div>
+						  <div id="collapsemenu" class="panel-collapse collapse">
+							  <div class="panel-body">
+								  <ul class="nav navbar-nav">
+									  <li id="user-name"/>
+									  <li><button type="button" class="btn btn-primary btn-sm" id = "switch-network">Change Network</button></li>
+									  <li><button type="button" class="btn btn-primary btn-sm" id = "logout-button" data-toggle="modal" data-target="#logout-modal">Log Out</button></li>
+								  </ul>
+							  </div>
+						  </div>
+					  </div>
+				  </div>
+			  </div>
+			</div>
+		</ul>
+  </nav>
+  </header>
 
+  <body>
 	<!-- Sub Navbar Container -->
     <div class="container-fluid no-padding">
       <!-- Side Tool Bar -->
       <div class="row no-margin">
         <div class="col-sm-2 no-padding max-height">
           <div class="toolbar">
-            <div class="navbar navbar-default" role="navigation">
+            <div class="navbar navbar-default max-height" role="navigation">
               <!--<input type="text" class="form-control search-bar" id="exampleInputAmount" placeholder="Search"> -->
               <button type="button" id="add-area-button" class="btn btn-primary btn-lg btn-block" data-toggle="modal" data-target="#add-area-modal">Add Area</button>
               <button type="button" id="remove-area-button" class="btn btn-primary btn-lg btn-block">Remove Area</button>
@@ -66,7 +87,7 @@
           <div class="tab-content">
             <div class="tab-pane active" id="changes" role="tabpanel">
               <h2> Current Changes to Network </h2> <br>
-
+              <!-- View changes tab -->
               <table id="changesTable" class="display compact">
                 <thead>
                   <tr><th>Date</th><th>Change Type</th><th>Description</th></tr>
@@ -77,11 +98,14 @@
               </table>
 
             </div>
+            <!-- End View Changes Tab-->
+
+            <!--View Network Tab-->
             <div class="tab-pane" id="networkView" role="tabpanel">
-              <h1>InTUIt Network</h1>
+              <h1 id="displayTitle"></h1>
 	            <div id="mynetwork">
-		            <div class="vis-network" tabindex="900">
-			            <canvas width="500" height="1000" class="network-canvas" id="visual">
+		            <div class="vis-network max-height" tabindex="900">
+			            <canvas width="500" height="1000" class="network-canvas">
 			            </canvas>
 			            <div class="vis-navigation">
 				            <div class="vis-button vis-up" style="touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></div>
@@ -95,9 +119,11 @@
 		            </div>
 	            </div>
 	            <div id="info">
-	              <p id="selection"></p>
+	            <p id="selection"></p>
 	            </div>
+              <!--End View Network Tab-->
             </div>
+          <!-- End tab content -->
           </div>
         </div>
       </div>
@@ -123,6 +149,17 @@
                 <label for="areaName">Area Name:</label>
                 <input type="text" class="form-control" id="areaName" placeholder="Cheek212" required>
               </div>
+              <br>
+              <table id="areaTable" class="display compact">
+                 <thead>
+                   <tr>
+                     <th>Date Added</th>
+                     <th>Area Name</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                 </tbody>
+              </table>
               <hr>
               <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
               <input type="submit" class="btn btn-primary" value="Add Area">
@@ -132,6 +169,34 @@
       </div>
     </div>
     <!-- End modal -->
+
+    <!-- Modal for Removing an area -->
+     <div id="remove-area-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+       <div class="modal-dialog" role="document">
+         <div class="modal-content">
+           <div class="modal-header">
+             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+               <span aria-hidden="true">&times;</span>
+             </button>
+              <h4 class="modal-title text-center" id="myModalLabel2">Remove an Area</h4>
+            </div>
+            <div class="modal-body">
+              <form id="removeAreaForm">
+                <div class="form-group">
+                  <label for="areaSelect3">Available Areas:</label>
+                  <select class="form-control" id="areaSelect3">
+                  <option value="none" selected>No Areas Created</option>
+                  </select>
+                </div>
+                <hr>
+                <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+                <input type="submit" class="btn btn-primary" value="Remove Area">
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    <!-- End Remove Area Modal -->
 
     <!-- Modal for Adding a device -->
     <div id="add-device-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
@@ -151,6 +216,7 @@
 				  <option value="none" selected>No Areas Created</option>
 				</select>
 			  </div>
+        <div id="areaDeviceDisplay">
               <div class="form-group">
                 <div class="row">
                   <div class ="col-lg-3">
@@ -190,6 +256,7 @@
               <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
               <input type="submit" class="btn btn-primary" value="Add Device">
             </form>
+          </div>
           </div>
         </div>
       </div>
@@ -270,17 +337,17 @@
       </div>
     </div>
   </div>
-    <!-- End Remove Device Modal -->
-
+  <!-- End Remove Device Modal -->
 
 	<!------------------------ End Modals ----------------------------->
 
     <!-- Script imports upon page load completion -->
     <script src="./js/homepage.js"></script>
+    <script src="./js/vis.js"></script>
+    <script src="./js/network-vis.js"></script>
+    <script src="./js/network_classes.js"></script>
     <script src="./js/tether.min.js"></script>
     <script src="./js/DataTables.js"></script>
     <script src="./js/bootstrap.min.js"></script>
-    <script src="./js/vis.js"></script>
-    <script src="./js/display.js"></script>
   </body>
 </html>
