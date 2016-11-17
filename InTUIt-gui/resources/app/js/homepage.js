@@ -129,7 +129,7 @@ function addArea() {
 	  $('#areaSelect2').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
     $('#areaSelect3').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
   }
-  var stream = fs.createWriteStream('./resources/app/json/area_devices/' + areaName + '-devices.json');
+  var stream = fs.createWriteStream('./resources/app/json/area_devices/' + $('#areaName').val() + '-devices.json');
   stream.write(JSON.stringify({'deviceData':[]}));
   stream.end();
 

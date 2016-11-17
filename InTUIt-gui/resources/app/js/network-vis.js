@@ -85,7 +85,7 @@
           $('#selection').append('Edge: ' + params.edges);
         }
         else {
-          $('#selection').append($('#network-name').html());
+          $('#selection').append($('#panelTitle').html());
         }
   });
 
