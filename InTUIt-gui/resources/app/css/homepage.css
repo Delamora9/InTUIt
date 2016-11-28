@@ -92,9 +92,33 @@ while being responsive to its conainer */
 	margin-bottom: 10%;
 }
 
-.logout-button {
-	text-decoration: underline;
-	text-decoration: bold;
+.collapse-button {
+	height: 100%;
+	font-size: 20pt;
 	color: white;
+	margin-top: 100px;
 }
 
+.dropdown-container {
+	height: 100%;
+}
+
+a.logout-button:active,
+a.logout-button:visited,
+a.logout-button:link,
+a.collapse-button:active,
+a.collapse-button:visited,
+a.collapse-button:link {
+	color: white;
+	text-decoration: none;
+}
+
+a.logout-button:hover,
+a.collapse-button:hover {
+	color: gray;
+	text-decoration: underline;
+}
+
+#navbar-brand {
+  font-size: 20pt;
+}

@@ -18,21 +18,21 @@
 	<nav class="navbar navbar-dark bg-inverse">
          <ul class="nav navbar-nav">
             <li class="navbar-brand">InTUIt IoT Network Creator </li>
-			<div class="container">
+			<div class="dropdown-container">
             <div class= "nav-stats">
 				<div class="panel-group">
 					<div class="panel panel-default">
 						<div class="panel-heading">
 							<h4 class="panel-title">
-								<a class="logout-button" data-toggle="collapse" href="#collapsemenu">Network: N7</a>
+								<a id="network-name" class="collapse-button" data-toggle="collapse" href="#collapsemenu"></a>
 							</h4>
 						</div>
 						<div id="collapsemenu" class="panel-collapse collapse">
 							<div class="panel-body">
 								<ul class="nav navbar-nav">
 									<li id="user-name"/>
-									<li>Change Network</li>
-									<li><div class="logout-button" data-toggle="modal" data-target="#logout-modal">Log Out</div></li>
+									<li><a class="logout-button" data-toggle="modal" href="#network-modal">Change Network</a></li>
+									<li><a class="logout-button" data-toggle="modal" href="#logout-modal">Log Out</a></li>
 								</ul>
 							</div>
 						</div>
@@ -97,12 +97,13 @@
       <div id="add-policy-load"></div>
 	  <div id="rm-area-load"></div>
 	  <div id="logout-modal-load"></div>
+	  <div id="network-modal-load"></div>
 
       <!-- Script imports -->
       <script src="./js/homepage.js"></script>
       <script src="./js/tether.min.js"></script>
       <script src="./js/DataTables.js"></script>
-      <script src="./js/bootstrap.min.js"></script>
 	  <script src="./js/jquery.min.js"></script>
+      <script src="./js/bootstrap.min.js"></script>
    </body>
 </html>

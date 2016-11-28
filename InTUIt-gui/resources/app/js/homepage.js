@@ -136,16 +136,17 @@ $(document).ready(function() {
   networkName = getQueryVariable('networkName', queryString);
   var ndfFilename = username + '-' + networkName + '.ndf'; //file name to write NDF to
 
+  
   //Populate the Username and Network Fields bassed on Login
   $('#user-name').html('User: ' + username);
   $('#network-name').html('Network: ' + networkName);
-
   $('#changes').load('./html/current_changes.html');
   $('#add-area-load').load('./html/modals/add_area.html');
   $('#add-device-load').load('./html/modals/add_device.html');
   $('#add-policy-load').load('./html/modals/create_policy.html');
   $('#rm-area-load').load('./html/modals/remove_area.html');
   $('#logout-modal-load').load('./html/modals/logout-modal.html');
+  $('#network-modal-load').load('./html/modals/login_network.html');
   
   $('#offcanvasleft').click(function() {
   $('.row-offcanvas-left').toggleClass('active');
@@ -173,6 +174,13 @@ $('[data-toggle=offcanvasright]').click(function() {
 });
 
 
+$('#homepage-redirect').click(function(e) {
+	console.log("redirect");
+	userName = $('#userName').val();
+	networkName = $('#chooseNetwork').val();
+	window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName;
+});
+
 //Function to construct the NDF file for a user network
 $('#submitNDF').click(function buildNDF() {
   console.log("button works");
@@ -186,7 +194,6 @@ $('#submitNDF').click(function buildNDF() {
 
 //Function to log out user
 $(document).on('click', '#logout-redirect', function(event) {
-	console.log("in logout function");
 	userName="";
 	networkName="";
 	window.location.href="./loginIndex.html";

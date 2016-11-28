@@ -32,7 +32,7 @@ $(document).ready(function() {
 //ReST API sign in calls
 $("#loginQuery").click(function(){
 	$.ajax({
-		type: "POST",
+		type: "PUT",
 		url: "http://146.7.11.65:8080/signIn",
 		data: formData,
 		success: function(data, textStatus, jqXHR){
@@ -66,6 +66,7 @@ function networkSelect() {
 
 $(document).ready(function() {
 	$('#choose-network-load').load('./html/modals/login_network.html');
+	$('#new-account-load').load('./html/modals/new_account.html');
 	$("#login").submit(function(e) {
     e.preventDefault();
 		login();
@@ -81,3 +82,27 @@ function login() {
 		window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
 	});
 }
+
+
+//JESS WORK POINT 11/26
+/*
+-Do account creation modal
+-get temp code for ajax calls
+-set network val throughout
+*/
+
+
+/*function network() {
+	
+	networkName = $('#chooseNetwork').val();
+  	$('#homepage-redirect').click(function() {
+		window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
+	});
+}*/
+
+//Function to log out user
+$(document).on('click', '#logout-redirect', function(event) {
+	userName="";
+	networkName="";
+	window.location.reload(false);
+});
