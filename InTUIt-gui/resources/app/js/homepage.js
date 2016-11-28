@@ -61,37 +61,63 @@ $(document).ready(function() {
   //event fires upon adding an area
   $('#addAreaForm').submit(function(e){
     e.preventDefault(); //prevent form from redirect
-    setTimeout(function(){ //allow addDevice to execute before refresh
-      areaTable.ajax.reload();
-    }, 100);
-	  addArea($('#areaName').val());
-    $('#addAreaForm')[0].reset(); //reset form fields
-  	$('#areaName').focus();
+    if(findArea($('#areaName').val()) != null){
+      alert("An area with that name has already been created. Please choose another name.");
+    }
+    else{
+      setTimeout(function(){ //allow addDevice to execute before refresh
+        areaTable.ajax.reload();
+      }, 100);
+	     addArea($('#areaName').val());
+       $('#addAreaForm')[0].reset(); //reset form fields
+  	    $('#areaName').focus();
+    }
   });
 
   //event fires upon removing an area
   $('#removeAreaForm').submit(function(e){
     e.preventDefault(); //prevent form from redirect
-    removeArea($('#areaSelect3').val());
+    if(confirm('Removing ' + $('#areaSelect3').val() + ' will remove all associated ACUs. Continue?')){
+      removeArea($('#areaSelect3').val());
+    }
     $('#removeAreaForm')[0].reset(); //reset form fields
   });
 
   //event fires upon adding a device
   $('#addDeviceForm').submit(function(e){
     e.preventDefault(); //prevent form from redirect
-    setTimeout(function(){ //allow addDevice to execute before refresh
-      deviceTable.ajax.reload();
-      $('#addDeviceForm')[0].reset(); //reset form fields
-    }, 100);
-    addDevice();
-  $('#deviceName').focus();
+    if($('#areaSelect').val() == "none"){
+      alert("Please select an area before submitting.");
+    }
+    else if(findACU($('#deviceName').val(), findArea($('#areaSelect').val())) != null){
+      alert("A device with that name has already been created in this area. Please choose another name.");
+    }
+    else if(findArea($('#deviceName').val()) != null){
+      alert("An area with that name has already been created. Please choose another name.");
+    }
+    else {
+      setTimeout(function(){ //allow addDevice to execute before refresh
+        deviceTable.ajax.reload();
+        $('#addDeviceForm')[0].reset(); //reset form fields
+      }, 100);
+      addDevice();
+      $('#deviceName').focus();
+    }
   });
 
   //event fires upon removing a device
   $('#removeDeviceForm').submit(function(e){
     e.preventDefault(); //prevent form from redirect
-    if (confirm('Are you sure you want to remove ' + removeACU.acuName + ' from ' + removeACUArea.areaName + '?')) {
-      removeDevice();
+    if($('#areaSelect2').val() == "none"){
+      alert("Please select an area before submitting");
+    }
+    else if($('#deviceSelect').val() == "none"){
+      alert("Please select a device before submitting");
+    }
+    else{
+      if (confirm('Are you sure you want to remove ' + removeACU.acuName + ' from ' + removeACUArea.areaName + '?')) {
+        removeDevice();
+      }
     }
   });
 
@@ -103,19 +129,12 @@ $(document).ready(function() {
 	$('#policyArea').focus();
   });
 
-  //event fires upon logging out
-  $('#removeAreaForm').submit(function(e){
-    e.preventDefault();
-    console.log("in logout function");
-    userName="";
-    networkName="";
-    window.location.href="./loginIndex.html";
-  });
 });
 
 
 //Adding an area into the network
 function addArea() {
+  areaName = $('#areaName').val();
   areaList.push(new Area($('#areaName').val()));
   //update the slectable list of areas in the add acu form
   $('#areaSelect').empty();
@@ -134,9 +153,9 @@ function addArea() {
   stream.end();
 
   var date = new Date();
-  $.getJSON("./json/areas.json", function(json) {
-    var deviceJSON = [date.toLocaleString(), areaName];
-    json.areaData.push(deviceJSON);
+  $.getJSON("./resources/app/json/areas.json", function(json) {
+    var areaJSON = [date.toLocaleString(), areaName];
+    json.areaData.push(areaJSON);
     var stream = fs.createWriteStream('./resources/app/json/areas.json');
     stream.write(JSON.stringify(json));
     stream.end();
@@ -146,6 +165,7 @@ function addArea() {
 
 //Removing an Area from the network
 function removeArea(areaName) {
+  removeAreaNode(areaName);
   for(var i = 0; i < this.areaList.length; i++) {
       if(this.areaList[i].areaName == areaName)
           this.areaList.splice(i, 1);
@@ -156,7 +176,7 @@ function removeArea(areaName) {
     $('#remove-area-modal').modal('hide');
   }
 
-  $.getJSON("./json/areas.json", function(json) {
+  $.getJSON("./resources/app/json/areas.json", function(json) {
     for (var i = 0; i < json.areaData.length; i++){
       if(areaName == json.areaData[i][1]){
         json.areaData.splice(i, 1); //this part is not working yet and needs to be modified
@@ -188,7 +208,7 @@ function addDevice() {
   var date = new Date();
 
   //function call to add the device to the stored json of devices
-  $.getJSON("./json/area_devices/" + deviceArea.areaName + "-devices.json", function(json) {
+  $.getJSON("./resources/app/json/area_devices/" + deviceArea.areaName + "-devices.json", function(json) {
     var deviceJSON = [date.toLocaleString(), $('#deviceName').val(), $('#deviceStates').val(), $('#deviceActions').val(), $('#deviceDependencies').val()];
     json.deviceData.push(deviceJSON);
     var stream = fs.createWriteStream('./resources/app/json/area_devices/' + deviceArea.areaName + '-devices.json');
@@ -204,15 +224,19 @@ function removeDevice() {
   if (index > -1) {
     removeACUArea.acuList.splice(index, 1);
   }
-  $.getJSON("./json/devices.json", function(json) {
+  $.getJSON("./resources/app/json/area_devices/" + $('#areaSelect2').val() + "-devices.json", function(json) {
     for (var i = 0; i < json.deviceData.length; i++){
       if(removeACU.acuName == json.deviceData[i][1]){
         delete json.deviceData[i]; //this part is not working yet and needs to be modified
       }
     }
+    var stream = fs.createWriteStream("./resources/app/json/area_devices/" + $('#areaSelect2').val() + "-devices.json");
+    stream.write(JSON.stringify(json));
+    stream.end();
     removeACU = '';
     removeACUArea = '';
   });
+  removeDeviceNode($('#deviceSelect').val(), $('#areaSelect2').val());
   $('#deviceSelect').empty();
   $('#deviceSelect').append('<option value=\"none\" selected>Select a Device</option>');
   for (var i = 0; i < removeACUArea.acuList.length; i++) {
@@ -296,29 +320,6 @@ $('#add-device-button').click(function() {
     $('#areaDeviceDisplay').hide();
   }
 
-  if (!($.fn.dataTable.isDataTable('#deviceTable'))){ //if the datatable isn't created, make it
-    deviceTable = $('#deviceTable').DataTable({
-  	  "paging": true,
-  	  "iDisplayLength": 5,
-      "lengthMenu": [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
-      "responsive": true,
-      "autoWidth": false,
-      "language": {"emptyTable": "No ACUs have been created"},
-      "order": [[0, 'desc']],
-      "bDestroy": true,
-      "columns": [
-          { "width": "12%" },
-          { "width": "15%" },
-          { "width": "20%" },
-          { "width": "28%" },
-          { "width": "25%" }
-      ],
-  	  "ajax": {
-  	    "url": './json/devices.json',
-  		  "dataSrc": 'deviceData'
-  	  }
-    });
-  }
 });
 
 //Prefires for when user clicks Remove Device button
@@ -354,6 +355,11 @@ $('#logout-button').click(function() {
       window.location.href="./loginIndex.html";
     }
   }
+});
+
+//Prefires for when user clicks Logout button
+$('#edit-device-button').click(function() {
+
 });
 
 //Function to switch networks
@@ -421,7 +427,7 @@ function findArea(name) {
 			return areaList[i];
 		}
 	}
-	console.log("findArea: Could not find area specified")
+  return null;
 }
 
 //Finds an ACU in a given Area
@@ -432,7 +438,7 @@ function findACU(name, Area) {
 			return acuList[i];
 		}
 	}
-	console.log("findACU: Could not find ACU specified")
+  return null;
 }
 
 //Returns query string value given
@@ -445,5 +451,28 @@ function getQueryVariable(variable, queryString) {
        return decodeURIComponent(pair[1]);
     }
   }
-  console.log('Query variable %s not found', variable);
+}
+
+function deleteAreaFiles(dirPath) {
+  try { var files = fs.readdirSync(dirPath); }
+  catch(e) { return; }
+  if (files.length > 0){
+    for (var i = 0; i < files.length; i++) {
+      var filePath = dirPath + '/' + files[i];
+      if (fs.statSync(filePath).isFile())
+        fs.unlinkSync(filePath);
+      else
+        deleteAreaFiles(filePath);
+    }
+  }
+};
+
+window.onunload = function(){
+  $.getJSON("./resources/app/json/areas.json", function(json) {
+    json.areaData.length = 0;
+    var stream = fs.createWriteStream('./resources/app/json/areas.json');
+    stream.write(JSON.stringify(json));
+    stream.end();
+  });
+  deleteAreaFiles("./resources/app/json/area_devices");
 }
