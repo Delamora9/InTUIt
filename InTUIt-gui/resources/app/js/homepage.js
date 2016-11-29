@@ -44,9 +44,9 @@ $(document).ready(function() {
     "language": {"emptyTable": "No changes have been made"},
     "order": [[0, 'desc']],
     "columns": [
-        { "width": "33%" },
-        { "width": "33%" },
-        { "width": "33%" }
+        { "width": "25%" },
+        { "width": "25%" },
+        { "width": "50%" }
     ],
     "ajax": {
       "url": './json/changes.json',
@@ -69,6 +69,7 @@ $(document).ready(function() {
   $('#addAreaForm').submit(function(e){
     e.preventDefault(); //prevent form from redirect
 	addArea();
+    changesTable.ajax.reload();
     this.reset(); //resets the fields within the form
 	$('#areaName').focus();
   });
@@ -82,6 +83,10 @@ $(document).ready(function() {
   });
 });
 
+//Add a new entry to the Current Change Table
+function newChange(type, description) {
+    
+}
 
 //Adding an area into the network
 function addArea() {

@@ -1,1 +1,27 @@
-{"changeData":[]}
+{"changeData":[
+    [
+        "11:43",
+        "Added Device",
+        "Created device: Test1"
+    ],
+    [
+        "9:11",
+        "Area Destroyed",
+        "It was bad"
+    ],
+    [
+        "7:07",
+        "Policy Created",
+        "Policy enforced on Dev1 and Dev2"
+    ],
+    [
+        "8:23",
+        "Area Created",
+        "New area: NAME"
+    ],
+    [
+        "3:17",
+        "Device edited",
+        "Edited the Dependencies for Dev4"
+    ]
+]}
