@@ -173,14 +173,6 @@ $('[data-toggle=offcanvasright]').click(function() {
   });
 });
 
-
-$('#homepage-redirect').click(function(e) {
-	console.log("redirect");
-	userName = $('#userName').val();
-	networkName = $('#chooseNetwork').val();
-	window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName;
-});
-
 //Function to construct the NDF file for a user network
 $('#submitNDF').click(function buildNDF() {
   console.log("button works");
@@ -190,6 +182,14 @@ $('#submitNDF').click(function buildNDF() {
     stream.write(i.printArea());
   }
   stream.end();
+});
+
+//Function to change network
+$(document).on('click', '#homepage-redirect', function(event) {
+	var queryString = window.location.search;
+	userName = getQueryVariable('userName', queryString);
+	networkName = document.getElementById('networks').value;
+	window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
 });
 
 //Function to log out user
