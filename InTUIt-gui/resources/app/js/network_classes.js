@@ -23,14 +23,13 @@ var Network = function (networkName, userName) {
     }
 
     this.removeArea = function removeArea(areaName) {
-        for(var i = 1; i < this.areaList.length; i++) {
+        for(var i = 0; i < this.areaList.length; i++) {
             if(this.areaList[i].areaName == areaName)
                 this.areaList.splice(i, 1);
         }
     }
 
     /* Unsure if this will be possible
-
     this.getArea = function getArea(areaName) {
         for(var i = 1; i < this.areaList.length; i++) {
             if(this.areaList[i].areaName == areaName)
@@ -91,8 +90,8 @@ var Area = function (areaName) {
     }
 
     this.removeACU = function removeACU(acuName) {
-        for(var i = 1; i < this.acuList.length; i++) {
-            if(this.acuList[i].areaName == acuName)
+        for(var i = 0; i < this.acuList.length; i++) {
+            if(this.acuList[i].acuName == acuName)
                 this.acuList.splice(i, 1);
         }
     }
@@ -106,8 +105,8 @@ var Area = function (areaName) {
 
     this.printArea = function printArea() {
         var areaString = "\"" + this.areaName + "\" :{";
-        for (var i = 0; index < this.acuList.length; i++) {
-            areaString += acuList[i].printACU();
+        for (var i = 0; i < this.acuList.length; i++) {
+            areaString += this.acuList[i].printACU();
             if (i + 1 < this.acuList.length) { areaString += ", "; }
         }
         areaString += "}";
@@ -120,7 +119,7 @@ var Area = function (areaName) {
             if(this.acuList[i].hasPolicy()) {
                 areaPolicyString += this.acuList[i].printACUPolicies();
             }
-            if(this.acuList[i+1].hasPolicy()){ areaPolicyString += ", "; }
+            //if(this.acuList[i+1].hasPolicy()){ areaPolicyString += ", "; } errors out the build of ndf
         }
         areaPolicyString += "}"
         return areaPolicyString;
@@ -128,9 +127,9 @@ var Area = function (areaName) {
 }
 
 
-    
+
 /*ACU Class********************************************************************
-(ACU) This class represents a device that is connected to the Network. An ACU 
+(ACU) This class represents a device that is connected to the Network. An ACU
 has the ability to hold any Policies that are associated to it.
 ******************************************************************************/
 var ACU = function (acuName, states, dependencies, actions, area) {

@@ -12,27 +12,73 @@ var fs = require('fs');
 
 var userName; //Variable for logged in user. Default is 'generic'
 var networkName; //Variable for current network. Default is 'network'
+var formData;
+var password; //Password of user for login
 
 
-//script that executes once index page is fully loaded
+/* JESS's NEW CODE
+//call function to
 $(document).ready(function() {
+	$('#choose-network-load').load('./html/modals/login_network.html');
+	$("#login").submit(function(e) {
+    e.preventDefault();
+	userName = $('#userName').val();
+	password = $('#password').val();
+	//formData = {user_id: userName, password: password, mode: "Lin"};
+	});
+});
+ JESS's New Code
+//ReST API sign in calls
+$("#loginQuery").click(function(){
+	$.ajax({
+		type: "POST",
+		url: "http://146.7.11.65:8080/signIn",
+		data: formData,
+		success: function(data, textStatus, jqXHR){
+			if (xhr.status == 200)
+			{
+				networkSelect();
+			}
+		},
+		error: function(jqXHR, textStatus, errorThrown)
+		{
+		}
+	});
+});
+//redirect to network selection modal
+function networkSelect() {
+	//open modal
+	$('#login-modal').modal({
+		focus: true
+	});
+	//redirect to home page upon choosing network
+	networkName = $('#chooseNetwork').val();
+  	$('#homepage-redirect').click(function() {
+		window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
+	});
+	$('#logout').click(function() {
+		window.location.reload(true);
+	});
+}
+*/
 
+$(document).ready(function() {
+	$('#choose-network-load').load('./html/login_network.html');
 	$("#login").submit(function(e) {
     e.preventDefault();
 		login();
 	});
-
 });
-
-//script that executes once login buton is clicked - display modal
-//var loginButton = document.getElementById("login");
-//loginButton.onclick = function() {
-//	modal.style.display = "block";
-//}
 
 //modal function to log user into system
 function login() {
   userName = $('#userName').val();
-  networkName = $('#networkName').val();
-  window.location.assign('./homepage.html?userName=' + userName +'&networkName=' + networkName);
+  password = $('#password').val();
+  networkName = $('#chooseNetwork').val();
+  	$('#homepage-redirect').click(function() {
+		window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
+	});
+	$('#logout').click(function() {
+		window.location.reload(true);
+	});
 }

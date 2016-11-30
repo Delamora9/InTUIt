@@ -11,9 +11,9 @@
     <!-- Style imports -->
     <link rel="stylesheet" type="text/css" href="./css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="./css/homepage.css">
+    <link rel="stylesheet" type="text/css" href="./css/vis.css">
+    <link rel="stylesheet" type="text/css" href="./css/NetworkVis.css">
     <link rel="stylesheet" type="text/css" href="./css/DataTables.css">
-	<link rel="stylesheet" type="text/css" href="./css/vis.css">
-	<link rel="stylesheet" type="text/css" href="./css/NetworkVis.css">
   </head>
 
   <body>
@@ -90,7 +90,7 @@
 
 						<!--View Network Tab-->
             <div class="tab-pane max-height active" id="networkView" role="tabpanel">
-							<h2 id="display-name"></h2>
+							<h2 id="displayTitle"></h2>
 							<div id="mynetwork">
 								<div class="vis-network max-height" tabindex="900">
 									<canvas class="network-canvas">
@@ -371,10 +371,10 @@
     </div>
     <!-- End Remove Policy Modal -->
 
-	<!------------------------ End Modals ----------------------------->
+		<!------------------------ End Modals ----------------------------->
 
     <!-- Script imports upon page load completion -->
-	<script src="./js/network_classes.js"></script>
+		<script src="./js/network_classes.js"></script>
     <script src="./js/homepage.js"></script>
     <script src="./js/tether.min.js"></script>
     <script src="./js/DataTables.js"></script>
