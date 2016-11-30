@@ -112,6 +112,7 @@ function addArea(areaName) {
     $('#areaSelect3').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
   }
 
+  /*
   var stream = fs.createWriteStream('./resources/app/json/area_devices/' + areaName + '-devices.json');
   stream.write(JSON.stringify({'deviceData':[]}));
   stream.end();
@@ -124,9 +125,13 @@ function addArea(areaName) {
     stream.write(JSON.stringify(json));
     stream.end();
   });
+  */
+  //add to current changes table
+  var description = 'Name: ' + $('#areaName').val();
+  addChange("Area Added", description);
+  //add area node to the network visualization
   addAreaNode($('#areaName').val());
 }
-
 
 //********************REMOVING AN AREA **********************//
 //Prefires for when user clicks Remove Area button
@@ -183,6 +188,10 @@ function removeArea(areaName) {
     $('#areaSelect2').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
     $('#areaSelect3').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
   }
+
+  //add to current changes table
+  var description = 'Name: ' + areaName;
+  addChange("Area Removed", description);
 }
 
 
@@ -228,6 +237,11 @@ function addDevice() {
     stream.write(JSON.stringify(json));
     stream.end();
   });
+  //add to current changes table
+  var description = 'Name: ' + $('#deviceName').val() + '<br/>States: ' + $('#deviceStates').val() +
+                    '<br/>Actions: ' + $('#deviceActions').val() + '<br/>Dependencies: ' + $('#deviceDependencies').val();
+  addChange("Device Added", description);
+  //add acu node to the network visualization
   addDeviceNode($('#deviceName').val(), $('#areaSelect').val());
 }
 
@@ -275,6 +289,10 @@ function removeDevice(area, device) {
     var curDevice = area.acuList[i];
     $('#deviceSelect').append('<option value="' + curDevice.acuName + '">' + curDevice.acuName +'</option>');
   }
+  //add to current changes table
+  var description = 'Name: ' + device;
+  addChange("Device Removed", description);
+  //remove acu node from network visualization
   deleteDeviceNode(device, area.areaName);
 }
 
@@ -306,6 +324,10 @@ function addPolicy() {
   var policyArea = findArea($('#policyArea').val());
   var policyACU = findACU($('#policyDevice').val(), policyArea);
   policyACU.addPolicy(tempPolicy);
+  //add to current changes table
+  var description = 'Policy: Given ' + $('#givenStates').val() + ' associate ' + $('#associatedCommand').val()
+                    '<br/>Area: ' + $('#policyArea').val() + '<br/>Device: ' + $('#policDevice').val();
+  addChange("Policy Added", description);
 }
 
 
@@ -330,6 +352,23 @@ $('#removePolicyForm').submit(function(e){
 
 //****************END NETWORK EDITING MODALS BEHAVIOR*****************//
 
+//****************CURRENT NETWORK CHANGES TAB*****************************************************/
+//updates the current changes table
+function addChange(type, description) {
+    var date = new Date();
+    $.getJSON("./json/changes.json", function(json) {
+      var changeJSON = [date.toLocaleString(), type, description];
+      json.changeData.push(changeJSON);
+      var stream = fs.createWriteStream('./resources/app/json/changes.json');
+      stream.write(JSON.stringify(json));
+      stream.end();
+    });
+    setTimeout(function(){ //allow addChange to execute before refresh
+      changesTable.ajax.reload();
+    }, 100);
+}
+
+//****************END CURRENT NETWORK CHANGES TAB*************************************************//
 
 //Function to construct the NDF file for a user network
 $('#submitNDF').click(function buildNDF() {
