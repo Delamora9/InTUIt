@@ -1,0 +1,40 @@
+/*	Name: Keith A Cissell
+	File Location:
+	URL: index.css
+	Comment: Style sheet for the pie recipe home page
+*/
+
+#mynetwork {
+      width: 100%;
+      height: 80%;
+      border: 1px solid lightgray;
+			background-color: black;
+    }
+
+#info {
+      width: 100%;
+      height: 20%;
+      border: 1px solid lightgray;
+			background-color: white;
+    }
+
+vis-network {
+	position: relative;
+	overflow: hidden;
+	touch-action: pan-y;
+	user-select: none;
+	-webkit-user-drag: none;
+	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+	width: 100%;
+	height: 100%;
+}
+
+network-canvas {
+	position: relative;
+	touch-action: none;
+	user-select: none;
+	-webkit-user-drag: none;
+	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+	width: 100%;
+	height: 100%;
+}
