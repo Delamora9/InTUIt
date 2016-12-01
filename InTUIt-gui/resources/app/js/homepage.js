@@ -189,7 +189,12 @@ $(document).on('click', '#homepage-redirect', function(event) {
 	var queryString = window.location.search;
 	userName = getQueryVariable('userName', queryString);
 	networkName = document.getElementById('networks').value;
-	window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
+		if (networkName == 'new') {
+			var networkName = document.getElementById('newNetwork').value;
+			window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
+		} else {
+			window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
+		}
 });
 
 //Function to log out user
@@ -246,6 +251,19 @@ $('#add-device-button').click(function() {
     });
   }
 });
+
+//enables-disables the new network name field
+function enableNewNetwork()
+{
+	if (document.getElementById('networks').value === 'new') {
+		console.log('new');
+		document.getElementById('newNetwork').disabled=false;
+	} else {
+		console.log('not new');
+		document.getElementById('newNetwork').disabled=true;
+	}
+}	
+
 
 //Returns query string value given
 function getQueryVariable(variable, queryString) {

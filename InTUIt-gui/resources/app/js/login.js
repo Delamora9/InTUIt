@@ -25,13 +25,30 @@ $(document).ready(function() {
 	});
 });
 
+//enables-disables the new network name field
+function enableNewNetwork()
+{
+	if (document.getElementById('networks').value === 'new') {
+		console.log('new');
+		document.getElementById('newNetwork').disabled=false;
+	} else {
+		console.log('not new');
+		document.getElementById('newNetwork').disabled=true;
+	}
+}	
+
 //modal function to log user into system
 function login() {
   userName = $('#userName').val();
   password = $('#password').val();
   	$('#homepage-redirect').click(function() {
 		networkName = document.getElementById('networks').value;
-		window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
+		if (networkName == 'new') {
+			var networkName = document.getElementById('newNetwork').value;
+			window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
+		} else {
+			window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
+		}
 	});
 }
 
