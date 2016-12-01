@@ -11,9 +11,9 @@ var fs = require('fs');
 //for query string parsing
 var qs = require('querystring');
 
-var username = 'generic'; //Variable for logged in user. Default is 'generic'
-var networkName = 'network'; //Variable for current network. Default is 'network'
-var ndfFilename = username + networkName + '.ndf';
+var username; //Variable for logged in user.
+var networkName; //Variable for current network.
+var ndfFilename;
 
 var areaList = new Array(); //Array of all areas in the Network
 var deviceList = new Array(); //Array of all ACUs in the Network
@@ -35,28 +35,117 @@ $(document).ready(function() {
   $('#network-name').html('Network: ' + networkName);
   $('#displayTitle').html('Network: ' + networkName);
 
-  //Creates the changes datatable
-  changesTable = $('#changesTable').DataTable({
-    "paging": true,
-    "iDisplayLength": 10,
-    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-    "responsive": true,
-    "autoWidth": false,
-    "language": {"emptyTable": "No changes have been made"},
-    "order": [[0, 'desc']],
-    "columns": [
-        { "width": "33%" },
-        { "width": "33%" },
-        { "width": "33%" }
-    ],
-    "ajax": {
-      "url": './json/changes.json',
-      "dataSrc": 'changeData'
-    }
-  });
+  //clear any data from previous session
+  cleanWorkspace();
+
+  //delay execution to allow cleanWorkspace to complete
+  setTimeout(function() {
+      //read the NDF file
+      readNDF();
+
+
+      //Creates the changes datatable
+      changesTable = $('#changesTable').DataTable({
+        "paging": true,
+        "iDisplayLength": 10,
+        "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+        "responsive": true,
+        "autoWidth": false,
+        "language": {"emptyTable": "No changes have been made"},
+        "order": [[0, 'desc']],
+        "columns": [
+            { "width": "20%" },
+            { "width": "20%" },
+            { "width": "60%" }
+        ],
+        "ajax": {
+          "url": './json/changes.json',
+          "dataSrc": 'changeData'
+        }
+      });
+  }, 100);
 });
 //---end document.ready() calls
 
+//********************CLEAN WORKSPACE ******************//
+//function to clear any data from previous a previous session
+function cleanWorkspace() {
+    clearNDF1();
+    clearNDF2();
+    clearAreas();
+}
+
+//emptys the NDF1.json file
+function clearNDF1() {
+    $.getJSON("./NDF/NDF1.json", function(json) {
+        json.NDF1data = [];
+        var stream = fs.createWriteStream('./resources/app/NDF/NDF1.json');
+        stream.write(JSON.stringify(json));
+        stream.end();
+    });
+}
+
+//emptys the NDF2.json file
+function clearNDF2() {
+    $.getJSON("./NDF/NDF2.json", function(json) {
+        json.NDF2data = [];
+        var stream = fs.createWriteStream('./resources/app/NDF/NDF2.json');
+        stream.write(JSON.stringify(json));
+        stream.end();
+    });
+}
+
+//emptys the areas.json file
+function clearAreas() {
+    $.getJSON("./json/areas.json", function(json) {
+        json.areaData = [];
+        var stream = fs.createWriteStream('./resources/app/json/areas.json');
+        stream.write(JSON.stringify(json));
+        stream.end();
+    });
+}
+
+//emptys the current changes table
+function clearChangesTable() {
+    $.getJSON("./json/changes.json", function(json) {
+        json.changeData = [];
+        var stream = fs.createWriteStream('./resources/app/json/changes.json');
+        stream.write(JSON.stringify(json));
+        stream.end();
+    });
+    setTimeout(function(){ //allow addChange to execute before refresh
+      changesTable.ajax.reload();
+    }, 100);
+}
+//********************END CLEAN WORKSPACE **************//
+
+//********************LOADING NDF **********************//
+//function to read NDF
+function readNDF() {
+    //put NDF data into json files
+    $.get("./NDF/testClient-testNetwork.ndf", function(txt) {
+        var lines = txt.split("\n");
+        $.getJSON("./NDF/NDF1.json", function(json) {
+            json.NDF1data.push(lines[1]);
+            var stream = fs.createWriteStream('./resources/app/NDF/NDF1.json');
+            stream.write(JSON.stringify(json));
+            stream.end();
+        });
+        $.getJSON("./NDF/NDF2.json", function(json) {
+            json.NDF2data.push(lines[2]);
+            var stream = fs.createWriteStream('./resources/app/NDF/NDF2.json');
+            stream.write(JSON.stringify(json));
+            stream.end();
+        });
+    });
+}
+
+
+
+
+
+
+//********************End Loading NDF *****************//
 
 //********************ADDING AN AREA *****************//
 //Prefires for when user clicks Add Area button
@@ -111,12 +200,11 @@ function addArea(areaName) {
     $('#areaSelect2').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
     $('#areaSelect3').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
   }
-
   /*
   var stream = fs.createWriteStream('./resources/app/json/area_devices/' + areaName + '-devices.json');
   stream.write(JSON.stringify({'deviceData':[]}));
   stream.end();
-
+  */
   var date = new Date();
   $.getJSON("./json/areas.json", function(json) {
     var deviceJSON = [date.toLocaleString(), areaName];
@@ -125,7 +213,7 @@ function addArea(areaName) {
     stream.write(JSON.stringify(json));
     stream.end();
   });
-  */
+
   //add to current changes table
   var description = 'Name: ' + $('#areaName').val();
   addChange("Area Added", description);
@@ -325,8 +413,8 @@ function addPolicy() {
   var policyACU = findACU($('#policyDevice').val(), policyArea);
   policyACU.addPolicy(tempPolicy);
   //add to current changes table
-  var description = 'Policy: Given ' + $('#givenStates').val() + ' associate ' + $('#associatedCommand').val()
-                    '<br/>Area: ' + $('#policyArea').val() + '<br/>Device: ' + $('#policDevice').val();
+  var description = 'Policy: Given ' + $('#givenStates').val() + ' associate ' + $('#associatedCommand').val() +
+                    '<br/>Device: ' + $('#policDevice').val() + '<br/>Area: ' + $('#policyArea').val();
   addChange("Policy Added", description);
 }
 
@@ -352,8 +440,7 @@ $('#removePolicyForm').submit(function(e){
 
 //****************END NETWORK EDITING MODALS BEHAVIOR*****************//
 
-//****************CURRENT NETWORK CHANGES TAB*****************************************************/
-//updates the current changes table
+//function to update the current changes table
 function addChange(type, description) {
     var date = new Date();
     $.getJSON("./json/changes.json", function(json) {
@@ -368,8 +455,6 @@ function addChange(type, description) {
     }, 100);
 }
 
-//****************END CURRENT NETWORK CHANGES TAB*************************************************//
-
 //Function to construct the NDF file for a user network
 $('#submitNDF').click(function buildNDF() {
   var stream = fs.createWriteStream('./resources/app/' + ndfFilename);
@@ -383,7 +468,8 @@ $('#submitNDF').click(function buildNDF() {
   }
   stream.write('}')
   stream.end();
-
+  //clear the current changes table
+  clearChangesTable();
   //visual update of submit below submit button
   var date = new Date();
   $('#ndfUpdateTime').html('<span class="white">NDF for ' + networkName + " updated on " + date.toLocaleString() + "</span>");
