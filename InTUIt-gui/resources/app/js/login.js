@@ -36,34 +36,44 @@ function enableNewNetwork()
 	}
 }	
 
-//modal function to log user into system
-function login() {
-  //userName = $('#userName').val();
-  //password = $('#password').val();
-  	$('#networkQuery').click(function() {
-		networkName = document.getElementById('networks').value;
-		if (networkName == 'new') {
-			var networkName = document.getElementById('newNetwork').value;
-			window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
-		} else {
-			window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
-		}
-	});
-}
-
 //Function to create new account
 $(document).on('click', '#newAccount-redirect', function() {
 	userName = $('#newUser').val();
 	password = $('#newPassword').val();
-	networkName = $('#newNetwork').val();
-	window.location='homepage.html?userName=' + userName +'&networkName=' + networkName;
+	//ajax call to create user/password pair
+	$.ajax({
+		url: 'http://146.7.44.180:8080/signIn?' + $.param({"userID": userName, "mode": "Sup"}),
+		method:'PUT',
+		data: {userPass: password},
+		success: function(data, status, xhttp){
+			alert(data);
+			//ajax call to create network
+			/*
+				window.location='homepage.html?userName=' + userName +'&networkName=' + networkName;
+			*/
+		},
+		error: function(data, status, xhttp)
+		{
+			//alert(data);
+		}
+	});
 });
 
 //Function to log out user
 $(document).on('click', '#logout-redirect', function(event) {
-	userName="";
-	networkName="";
-	window.location.reload(false);
+	$.ajax({
+		url: 'http://146.7.44.180:8080/signIn?' + $.param({"userID": "user", "mode": "Lout"}),
+		method:'PUT',
+		data: {userPass: '12345'},
+		success: function(data, xhr){
+			alert(data); //tells you that you logged out
+			window.location.reload(false);
+		},
+		error: function(xhr, data, errorThrown)
+		{
+			alert(data);
+		}
+	});
 });
 
 function loginQuery() {
@@ -80,6 +90,7 @@ function loginQuery() {
 			alert(data);
 		}
 	});
+	//AJAX --USER PROFILE
 	$.ajax({
 		url: 'http://146.7.44.180:8080/users',
 		method: 'GET',
@@ -91,4 +102,54 @@ function loginQuery() {
 			alert(data);
 		}
 	});
+	//Function to call and populate dropdown list of networks
+	function listNetworks() {
+		//get user profile. an associative array that has userID, networkID, etc
+		$.ajax({
+			url: 'http://146.7.44.180:8080/users',
+			method:'GET',
+			success: function(data, xhr){
+				alert(data); //returns a JSON array that has all the user's credentials and network info
+			},
+			error: function(xhr, data, errorThrown)
+			{
+				alert(data); //all these error throws will just be debugging. the user should never see them
+			}
+		});
+		var networks[] = data["Provisioned-Networks"];
+		for (int i = 0; i < networks.length(); i++)
+		{
+			var name = networks[i];
+			var x = document.getElementById("networks");
+			var c = document.createElement("option");
+			c.text = name;
+			x.options.add(c, (i-1));
+		}
+		$("#network-modal").modal();
+	}
+	
+	//set networkName
+	networkName = document.getElementById('networks').value;
+	if (networkName == 'new') {
+		//create network function
+		/*
+		*/
+		window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
+	} else {
+		//get NDF based on networkName
+		$.ajax({
+			url: 'http://146.7.44.180:8080/NDF?' + $.param({"netID": networkName}), //put network ID here
+			method:'GET',
+			success: function(data, xhr){
+				alert(data);
+				//data is the received NDF. it's a giant string (with newline characters)
+			},
+			error: function(xhr, data, errorThrown)
+			{
+				alert(data);
+			}
+		});
+		//redirect to page
+		window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
+	}	
 }

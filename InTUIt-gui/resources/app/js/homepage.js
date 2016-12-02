@@ -189,19 +189,45 @@ $('#submitNDF').click(function buildNDF() {
 $(document).on('click', '#networkQuery', function(event) {
 	var queryString = window.location.search;
 	userName = getQueryVariable('userName', queryString);
-	networkName = document.getElementById('networks').value;
-		if (networkName == 'new') {
-			var networkName = document.getElementById('newNetwork').value;
-			window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
-		} else {
-			window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
-		}
+	networkName = document.getElementById('networks').value;	
+	if (networkName == 'new') {
+		var networkName = document.getElementById('newNetwork').value;
+		//AJAX CALL TO CREATE NETWORK
+		/*
+		*/
+		window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
+	} else {
+		//AJAX TO GET NEW NDF
+		$.ajax({
+			url: 'http://146.7.44.180:8080/NDF?' + $.param({"netID": "currentSelectedNetworkName"}), //put network ID here
+			method:'GET',
+			success: function(data, xhr){
+				alert(data);
+				//data is the recieved NDF. it's a giant string (with newline characters)
+			},
+			error: function(xhr, data, errorThrown)
+			{
+				alert(data);
+			}
+		});
+		window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
+	}
 });
 
 //Function to log out user
 $(document).on('click', '#logout-redirect', function(event) {
-	userName="";
-	networkName="";
+	$.ajax({
+		url: 'http://146.7.44.180:8080/signIn?' + $.param({"userID": userName, "mode": "Lout"}),
+		method:'PUT',
+		data: {userPass: password},
+		success: function(data, xhr){
+			alert(data); //tells you that you logged out
+		},
+		error: function(xhr, data, errorThrown)
+		{
+			alert(data);
+		}
+	});
 	window.location.href="./loginIndex.html";
 });
 
@@ -279,59 +305,68 @@ function getQueryVariable(variable, queryString) {
   console.log('Query variable %s not found', variable);
 }
 
-/*
-//------------AJAX CALLS----------//
-$("#networkQuery").click(function() {
+//Function to call and populate dropdown list of networks
+function listNetworks() {
+	//get user profile. an associative array that has userID, networkID, etc
 	$.ajax({
-		type: "GET",
-		url: "http://146.7.44.180:8080/signIn",
-		data: {"netID": networkName},
-		success: function(data, textStatus, xhr){
-			if (xhr.status == 200) {
-				//confirm, move to network page
-				console.log("Network works!");
-			}
-			//else
-			response = xhr.responseText;
+		url: 'http://146.7.44.180:8080/users',
+		method:'GET',
+		success: function(data, xhr){
+			alert(data); //returns a JSON array that has all the user's credentials and network info
 		},
-		error: function(jqXHR, textStatus, errorThrown)
+		error: function(xhr, data, errorThrown)
 		{
-			console.log(errorThrown);
+			alert(data); //all these error throws will just be debugging. the user should never see them
 		}
 	});
-});*/
+	var networks[] = data["Provisioned-Networks"];
+	for (int i = 0; i < networks.length(); i++)
+	{
+		var name = networks[i];
+		var x = document.getElementById("networks");
+		var c = document.createElement("option");
+		c.text = name;
+		x.options.add(c, (i-1));
+	}
+	$("#network-modal").modal();
+}
 
-//something wrong with this function
+
+//FUNCTION TO DELETE USER/NETWORK
 function deleteSomething() {
-	console.log('in function');
+	//Delete current network
 	if ($("input[name=deleteObj]:checked").val() === 'network')
 	{
-		console.log('delete a network!');
-		//var objtype = network;
+		//delete NDF. reminder that the user is assumed to be logged in
+		$.ajax({
+			url: 'http://146.7.44.180:8080/NDF?' + $.param({"netID": "currentSelectedNetworkName"}), //put network ID here
+			method:'DELETE',
+			success: function(data, xhr){
+				alert(data); //tells the user that the NDF was de-provisioned
+				window.location.href="./loginIndex.html";
+			},
+			error: function(xhr, data, errorThrown)
+			{
+				alert(data);
+			}
+		});
 	}
+	//AJAX to delete current user
 	else if ($("input[name=deleteObj]:checked").val() === 'user') {
 		console.log('delete a user!');
-		//var objtype = user;
+		$.ajax({
+			url: 'http://146.7.44.180:8080/signIn',
+			method:'DELETE',
+			success: function(data, xhr){
+				alert(data); //the user was deleted
+			},
+			error: function(xhr, data, errorThrown)
+			{
+				alert(data);
+			}
+		});
 	} else {
 		console.log('dont touch me!');
 		//error
 	}
-	var objname = document.getElementById('deleteName').value;
-	$.ajax({
-		type: "DELETE",
-		url: "http://146.7.44.180:8080/signIn",
-		data: {"userID": userName, "password": password},
-		success: function(data, textStatus, xhr) {
-			if (xhr.status == 200) {
-				//Confirm object deleted, return to loginIndex
-				console.log("Object deleted!");
-			}
-			//else
-			response = xhr.responseText;
-		},
-		error: function(jqXHR, textStatus, errorThrown)
-		{
-			console.log(errorThrown);
-		}
-	});
 };
