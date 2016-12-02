@@ -147,6 +147,7 @@ $(document).ready(function() {
   $('#rm-area-load').load('./html/modals/remove_area.html');
   $('#logout-modal-load').load('./html/modals/logout-modal.html');
   $('#network-modal-load').load('./html/modals/login_network.html');
+  $('#delete-modal-load').load('./html/modals/delete_modal.html');
   
   $('#offcanvasleft').click(function() {
   $('.row-offcanvas-left').toggleClass('active');
@@ -185,7 +186,7 @@ $('#submitNDF').click(function buildNDF() {
 });
 
 //Function to change network
-$(document).on('click', '#homepage-redirect', function(event) {
+$(document).on('click', '#networkQuery', function(event) {
 	var queryString = window.location.search;
 	userName = getQueryVariable('userName', queryString);
 	networkName = document.getElementById('networks').value;
@@ -277,3 +278,60 @@ function getQueryVariable(variable, queryString) {
   }
   console.log('Query variable %s not found', variable);
 }
+
+/*
+//------------AJAX CALLS----------//
+$("#networkQuery").click(function() {
+	$.ajax({
+		type: "GET",
+		url: "http://146.7.44.180:8080/signIn",
+		data: {"netID": networkName},
+		success: function(data, textStatus, xhr){
+			if (xhr.status == 200) {
+				//confirm, move to network page
+				console.log("Network works!");
+			}
+			//else
+			response = xhr.responseText;
+		},
+		error: function(jqXHR, textStatus, errorThrown)
+		{
+			console.log(errorThrown);
+		}
+	});
+});*/
+
+//something wrong with this function
+function deleteSomething() {
+	console.log('in function');
+	if ($("input[name=deleteObj]:checked").val() === 'network')
+	{
+		console.log('delete a network!');
+		//var objtype = network;
+	}
+	else if ($("input[name=deleteObj]:checked").val() === 'user') {
+		console.log('delete a user!');
+		//var objtype = user;
+	} else {
+		console.log('dont touch me!');
+		//error
+	}
+	var objname = document.getElementById('deleteName').value;
+	$.ajax({
+		type: "DELETE",
+		url: "http://146.7.44.180:8080/signIn",
+		data: {"userID": userName, "password": password},
+		success: function(data, textStatus, xhr) {
+			if (xhr.status == 200) {
+				//Confirm object deleted, return to loginIndex
+				console.log("Object deleted!");
+			}
+			//else
+			response = xhr.responseText;
+		},
+		error: function(jqXHR, textStatus, errorThrown)
+		{
+			console.log(errorThrown);
+		}
+	});
+};

@@ -20,8 +20,7 @@ $(document).ready(function() {
 	$('#choose-network-load').load('./html/modals/login_network.html');
 	$('#new-account-load').load('./html/modals/new_account.html');
 	$("#login").submit(function(e) {
-    e.preventDefault();
-		login();
+		e.preventDefault();
 	});
 });
 
@@ -39,9 +38,9 @@ function enableNewNetwork()
 
 //modal function to log user into system
 function login() {
-  userName = $('#userName').val();
-  password = $('#password').val();
-  	$('#homepage-redirect').click(function() {
+  //userName = $('#userName').val();
+  //password = $('#password').val();
+  	$('#networkQuery').click(function() {
 		networkName = document.getElementById('networks').value;
 		if (networkName == 'new') {
 			var networkName = document.getElementById('newNetwork').value;
@@ -66,3 +65,30 @@ $(document).on('click', '#logout-redirect', function(event) {
 	networkName="";
 	window.location.reload(false);
 });
+
+function loginQuery() {
+	//WORKING AJAX --SIGN UP
+	$.ajax({
+		url: 'http://146.7.44.180:8080/signIn?' + $.param({"userID": "Team05", "mode": "Lin"}),
+		method: 'PUT',
+		data: {userPass: 'csc450'},
+		success: function(data, status, xhttp){
+			alert(data);
+		},
+		error: function(data, status, xhttp)
+		{
+			alert(data);
+		}
+	});
+	$.ajax({
+		url: 'http://146.7.44.180:8080/users',
+		method: 'GET',
+		success: function(data, xhttp) {
+			alert(data);
+		},
+		error: function(data, xhttp)
+		{
+			alert(data);
+		}
+	});
+}
