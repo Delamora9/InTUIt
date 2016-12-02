@@ -132,11 +132,11 @@ var Area = function (areaName) {
 (ACU) This class represents a device that is connected to the Network. An ACU
 has the ability to hold any Policies that are associated to it.
 ******************************************************************************/
-var ACU = function (acuName, states, dependencies, actions, area) {
+var ACU = function (acuName, dependencies, states, actions, area) {
   // VARIABLES
     this.acuName = acuName;
-    this.states = states;
     this.dependencies = dependencies;
+    this.states = states;
     this.actions = actions;
     this.area = area;
     this.policyList = new Array(); //Array of all Policies associated to ACU

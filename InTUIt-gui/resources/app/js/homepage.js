@@ -17,6 +17,7 @@ var ndfFilename;
 
 var areaList = new Array(); //Array of all areas in the Network
 var deviceList = new Array(); //Array of all ACUs in the Network
+var ndfLoaded = false; //Variable to hold the load status of NDF
 
 var deviceTable;
 var areaTable;
@@ -35,61 +36,58 @@ $(document).ready(function() {
   $('#network-name').html('Network: ' + networkName);
   $('#displayTitle').html('Network: ' + networkName);
 
+  //Creates the changes datatable
+  changesTable = $('#changesTable').DataTable({
+    "paging": true,
+    "iDisplayLength": 10,
+    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+    "responsive": true,
+    "autoWidth": false,
+    "language": {"emptyTable": "No changes have been made"},
+    "order": [[0, 'desc']],
+    "columns": [
+        { "width": "20%" },
+        { "width": "20%" },
+        { "width": "60%" }
+    ],
+    "ajax": {
+      "url": './json/changes.json',
+      "dataSrc": 'changeData'
+    }
+  });
+
   //clear any data from previous session
   cleanWorkspace();
 
   //delay execution to allow cleanWorkspace to complete
-  setTimeout(function() {
-      //read the NDF file
-      readNDF();
-
-
-      //Creates the changes datatable
-      changesTable = $('#changesTable').DataTable({
-        "paging": true,
-        "iDisplayLength": 10,
-        "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-        "responsive": true,
-        "autoWidth": false,
-        "language": {"emptyTable": "No changes have been made"},
-        "order": [[0, 'desc']],
-        "columns": [
-            { "width": "20%" },
-            { "width": "20%" },
-            { "width": "60%" }
-        ],
-        "ajax": {
-          "url": './json/changes.json',
-          "dataSrc": 'changeData'
-        }
-      });
-  }, 100);
+  //setTimeout(function() {readNDF();}, 10000);
 });
 //---end document.ready() calls
 
 //********************CLEAN WORKSPACE ******************//
 //function to clear any data from previous a previous session
 function cleanWorkspace() {
-    clearNDF1();
-    clearNDF2();
+    clearNSDO();
+    clearOPD();
     clearAreas();
+    clearChangesTable();
 }
 
-//emptys the NDF1.json file
-function clearNDF1() {
-    $.getJSON("./NDF/NDF1.json", function(json) {
-        json.NDF1data = [];
-        var stream = fs.createWriteStream('./resources/app/NDF/NDF1.json');
+//emptys the NSDO.json file
+function clearNSDO() {
+    $.getJSON("./NDF/NSDO.json", function(json) {
+        json.NSDOdata = [];
+        var stream = fs.createWriteStream('./resources/app/NDF/NSDO.json');
         stream.write(JSON.stringify(json));
         stream.end();
     });
 }
 
-//emptys the NDF2.json file
-function clearNDF2() {
-    $.getJSON("./NDF/NDF2.json", function(json) {
-        json.NDF2data = [];
-        var stream = fs.createWriteStream('./resources/app/NDF/NDF2.json');
+//emptys the OPD.json file
+function clearOPD() {
+    $.getJSON("./NDF/OPD.json", function(json) {
+        json.OPDdata = [];
+        var stream = fs.createWriteStream('./resources/app/NDF/OPD.json');
         stream.write(JSON.stringify(json));
         stream.end();
     });
@@ -113,9 +111,6 @@ function clearChangesTable() {
         stream.write(JSON.stringify(json));
         stream.end();
     });
-    setTimeout(function(){ //allow addChange to execute before refresh
-      changesTable.ajax.reload();
-    }, 100);
 }
 //********************END CLEAN WORKSPACE **************//
 
@@ -125,21 +120,47 @@ function readNDF() {
     //put NDF data into json files
     $.get("./NDF/testClient-testNetwork.ndf", function(txt) {
         var lines = txt.split("\n");
-        $.getJSON("./NDF/NDF1.json", function(json) {
-            json.NDF1data.push(lines[1]);
-            var stream = fs.createWriteStream('./resources/app/NDF/NDF1.json');
+        $.getJSON("./NDF/NSDO.json", function(json) {
+            var nsdo = JSON.parse(lines[1]);
+            json.NSDOdata = nsdo;
+            var stream = fs.createWriteStream('./resources/app/NDF/NSDO.json');
             stream.write(JSON.stringify(json));
             stream.end();
         });
-        $.getJSON("./NDF/NDF2.json", function(json) {
-            json.NDF2data.push(lines[2]);
-            var stream = fs.createWriteStream('./resources/app/NDF/NDF2.json');
+        $.getJSON("./NDF/OPD.json", function(json) {
+            var opd = JSON.parse(lines[2]);
+            json.OPDdata.push(opd);
+            var stream = fs.createWriteStream('./resources/app/NDF/OPD.json');
             stream.write(JSON.stringify(json));
             stream.end();
         });
     });
+    setTimeout(function() {
+        readNSDO();
+        //readOPD();
+        //setTimeout(function() {ndfLoaded = true;}, 1000);
+    }, 1000);
 }
 
+//reads the NSDO
+function readNSDO() {
+    $.getJSON("./NDF/NSDO.json", function(json) {
+        var nsdo = json["NSDOdata"];
+        for (var a in nsdo) {
+            var area = nsdo[a];
+            var areaName = a.toString();
+            addArea(areaName);
+            for (var d in area) {
+                var device = area[d];
+                var deviceName = d.toString();
+                var dependencies = JSON.stringify(device["Dependencies"]);
+                var states = JSON.stringify(device["States"]);
+                var actions = JSON.stringify(device["Actions"]);
+                addDevice(deviceName, dependencies, states, actions, areaName)
+            }
+        }
+    });
+}
 
 
 
@@ -177,7 +198,7 @@ $('#add-area-button').click(function() {
 //event fires upon adding an area
 $('#addAreaForm').submit(function(e){
   e.preventDefault(); //prevent form from redirect
-  setTimeout(function(){ //allow addDevice to execute before refresh
+  setTimeout(function(){ //allow addArea to execute before refresh
     areaTable.ajax.reload();
   }, 100);
   addArea($('#areaName').val());
@@ -215,10 +236,10 @@ function addArea(areaName) {
   });
 
   //add to current changes table
-  var description = 'Name: ' + $('#areaName').val();
-  addChange("Area Added", description);
+  var description = 'Name: ' + areaName;
+  if (ndfLoaded) {addChange("Area Added", description);};
   //add area node to the network visualization
-  addAreaNode($('#areaName').val());
+  addAreaNode(areaName);
 }
 
 //********************REMOVING AN AREA **********************//
@@ -305,32 +326,39 @@ $('#addDeviceForm').submit(function(e){
     deviceTable.ajax.reload();
     $('#addDeviceForm')[0].reset(); //reset form fields
   }, 100);
-  addDevice();
+
+  var deviceName = $('#deviceName').val();
+  var dependencies = $('#deviceDependencies').val();
+  var states = $('#deviceStates').val();
+  var actions = $('#deviceActions').val();
+  var areaSelect = $('#areaSelect').val();
+
+  addDevice(deviceName, dependencies, states, actions, areaSelect);
 $('#deviceName').focus();
 });
 
 //Adding a device into the network
-function addDevice() {
-  var tempDevice = new ACU($('#deviceName').val(), $('#deviceStates').val(), $('#deviceDependencies').val(), $('#deviceActions').val(), $('#areaSelect').val());
-  var deviceArea = findArea($('#areaSelect').val());
+function addDevice(deviceName, dependencies, states, actions, areaSelect) {
+  var tempDevice = new ACU(deviceName, dependencies, states, actions, areaSelect);
+  var deviceArea = findArea(areaSelect);
   deviceArea.addACU(tempDevice);
 
   var date = new Date();
 
   //function call to add the device to the stored json of devices
   $.getJSON("./json/area_devices/" + deviceArea.areaName + "-devices.json", function(json) {
-    var deviceJSON = [date.toLocaleString(), $('#deviceName').val(), $('#deviceStates').val(), $('#deviceActions').val(), $('#deviceDependencies').val()];
+    var deviceJSON = [date.toLocaleString(), deviceName, states, actions, dependencies];
     json.deviceData.push(deviceJSON);
     var stream = fs.createWriteStream('./resources/app/json/area_devices/' + deviceArea.areaName + '-devices.json');
     stream.write(JSON.stringify(json));
     stream.end();
   });
   //add to current changes table
-  var description = 'Name: ' + $('#deviceName').val() + '<br/>States: ' + $('#deviceStates').val() +
-                    '<br/>Actions: ' + $('#deviceActions').val() + '<br/>Dependencies: ' + $('#deviceDependencies').val();
-  addChange("Device Added", description);
+  var description = 'Name: ' + deviceName + '<br/>States: ' + states +
+                    '<br/>Actions: ' + actions + '<br/>Dependencies: ' + dependencies;
+  if (ndfLoaded) { addChange("Device Added", description); };
   //add acu node to the network visualization
-  addDeviceNode($('#deviceName').val(), $('#areaSelect').val());
+  addDeviceNode(deviceName, areaSelect);
 }
 
 
@@ -470,6 +498,9 @@ $('#submitNDF').click(function buildNDF() {
   stream.end();
   //clear the current changes table
   clearChangesTable();
+  setTimeout(function(){ //allow addChange to execute before refresh
+    changesTable.ajax.reload();
+  }, 100);
   //visual update of submit below submit button
   var date = new Date();
   $('#ndfUpdateTime').html('<span class="white">NDF for ' + networkName + " updated on " + date.toLocaleString() + "</span>");
