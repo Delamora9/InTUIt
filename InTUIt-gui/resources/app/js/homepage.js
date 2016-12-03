@@ -214,22 +214,22 @@ $(document).on('click', '#networkQuery', function(event) {
 	}
 });
 
-//Function to log out user
-$(document).on('click', '#logout-redirect', function(event) {
+function logout(password) {
 	$.ajax({
-		url: 'http://146.7.44.180:8080/signIn?' + $.param({"userID": userName, "mode": "Lout"}),
+		url: 'http://146.7.44.180:8080/signIn?' + $.param({"userID": username, "mode": "Lout"}),
 		method:'PUT',
 		data: {userPass: password},
-		success: function(data, xhr){
+		success: function(data, status, xhttp){
 			alert(data); //tells you that you logged out
+			window.location.href="./loginIndex.html";
 		},
-		error: function(xhr, data, errorThrown)
+		error: function(data, status, xhttp)
 		{
 			alert(data);
 		}
 	});
-	window.location.href="./loginIndex.html";
-});
+	
+}
 
 //ADDING A DEVICE INTO NETWORK
 function addDevice() {
@@ -283,10 +283,8 @@ $('#add-device-button').click(function() {
 function enableNewNetwork()
 {
 	if (document.getElementById('networks').value === 'new') {
-		console.log('new');
 		document.getElementById('newNetwork').disabled=false;
 	} else {
-		console.log('not new');
 		document.getElementById('newNetwork').disabled=true;
 	}
 }	
@@ -308,40 +306,40 @@ function getQueryVariable(variable, queryString) {
 //Function to call and populate dropdown list of networks
 function listNetworks() {
 	//get user profile. an associative array that has userID, networkID, etc
+	var networks;
 	$.ajax({
 		url: 'http://146.7.44.180:8080/users',
 		method:'GET',
 		success: function(data, xhr){
 			alert(data); //returns a JSON array that has all the user's credentials and network info
+			var userprof = JSON.parse(data);
+			console.log(userprof["Provisioned-Networks"][0]);
+			networks = userprof["Provisioned-Networks"];
+			console.log(networks);
+			selectNetwork(networks);
+			/*for (var i = 0; i < userprof["Provisioned-Networks"].length; i++)
+			{
+				networks[i] = userprof["Provisioned-Networks"][i];
+			}*/
 		},
 		error: function(xhr, data, errorThrown)
 		{
 			alert(data); //all these error throws will just be debugging. the user should never see them
 		}
 	});
-	var networks[] = data["Provisioned-Networks"];
-	for (int i = 0; i < networks.length(); i++)
-	{
-		var name = networks[i];
-		var x = document.getElementById("networks");
-		var c = document.createElement("option");
-		c.text = name;
-		x.options.add(c, (i-1));
-	}
-	$("#network-modal").modal();
 }
 
 
 //FUNCTION TO DELETE USER/NETWORK
 function deleteSomething() {
 	//Delete current network
-	if ($("input[name=deleteObj]:checked").val() === 'network')
+	if ($("input[name=deleteObj]:checked").val() == 'network')
 	{
 		//delete NDF. reminder that the user is assumed to be logged in
 		$.ajax({
 			url: 'http://146.7.44.180:8080/NDF?' + $.param({"netID": "currentSelectedNetworkName"}), //put network ID here
 			method:'DELETE',
-			success: function(data, xhr){
+			success: function(data, status, xhttp){
 				alert(data); //tells the user that the NDF was de-provisioned
 				window.location.href="./loginIndex.html";
 			},
@@ -352,15 +350,16 @@ function deleteSomething() {
 		});
 	}
 	//AJAX to delete current user
-	else if ($("input[name=deleteObj]:checked").val() === 'user') {
+	else if ($("input[name=deleteObj]:checked").val() == 'user') {
 		console.log('delete a user!');
 		$.ajax({
 			url: 'http://146.7.44.180:8080/signIn',
 			method:'DELETE',
-			success: function(data, xhr){
+			success: function(data, status, xhttp){
 				alert(data); //the user was deleted
+				window.location.href="./loginIndex.html";
 			},
-			error: function(xhr, data, errorThrown)
+			error: function(data, status, xhttp)
 			{
 				alert(data);
 			}
@@ -370,3 +369,22 @@ function deleteSomething() {
 		//error
 	}
 };
+
+//load user profile ajax call
+$(document).on('click', '#logout-redirect', function(event) {
+	$.ajax({
+		url: 'http://146.7.44.180:8080/users',
+		method:'GET',
+		success: function(data, status, xhttp){
+			alert(data); //returns a JSON array that has all the user's credentials and network info
+			var userprof = JSON.parse(data);
+			var pass = (userprof["Password"]);
+			console.log(pass);
+			logout(pass);
+		},
+		error: function(data, status, xhttp)
+		{
+			alert(data); //all these error throws will just be debugging. the user should never see them
+		}
+	});
+});
