@@ -1,1 +1,0 @@
-{"NSDOdata":{"Gate1":{"Joystick":{"Dependencies":[],"States":["center","left","right"],"Actions":[]},"Laser2":{"Dependencies":["Gate1:Joystick"],"States":["off","on"],"Actions":["turn on","turn off"]},"Laser1":{"Dependencies":["Gate1:Joystick"],"States":["off","on"],"Actions":["turn on","turn off"]}}}}

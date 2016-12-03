@@ -72,71 +72,53 @@ function readNDF() {
     var lines;
     $.get(ndfFilePath, function(txt) {
         lines = txt.split("\n");
-        /*$.getJSON("./ndf/NSDO.json", function(json) {
-            json.NSDOdata = JSON.parse(lines[1]);
-            var stream = fs.createWriteStream('./resources/app/NDF/NSDO.json');
-            stream.write(JSON.stringify(json));
-            stream.end();
-        });
-        $.getJSON("./ndf/OPD.json", function(json) {
-            json.OPDdata = JSON.parse(lines[2]);
-            var stream = fs.createWriteStream('./resources/app/NDF/OPD.json');
-            stream.write(JSON.stringify(json));
-            stream.end();
-        });*/
     });
     setTimeout(function() {
-        console.log(lines);
         readNSDO(lines[1]);
         readOPD(lines[2]);
-        //setTimeout(function() {ndfLoaded = true;}, 1000);
+        setTimeout(function() {ndfLoaded = true;}, 1000);
     }, 1000);
 }
 
 //reads the NSDO
 function readNSDO(data) {
-    //$.getJSON("./ndf/NSDO.json", function(json) {
-        var nsdo = JSON.parse(data);
-        for (var a in nsdo) {
-            var area = nsdo[a];
-            var areaName = a.toString();
-            addArea(areaName);
-            for (var d in area) {
-                var device = area[d];
-                var deviceName = d.toString();
-                var dependencies = JSON.stringify(device["Dependencies"]);
-                dependencies = dependencies.replace('[','');
-                dependencies = dependencies.replace(']','');
-                var states = JSON.stringify(device["States"]);
-                states = states.replace('[','');
-                states = states.replace(']','');
-                var actions = JSON.stringify(device["Actions"]);
-                actions = actions.replace('[','');
-                actions = actions.replace(']','');
-                addDevice(deviceName, dependencies, states, actions, areaName)
-            }
-        }
-    //});
+  var nsdo = JSON.parse(data);
+  for (var a in nsdo) {
+      var area = nsdo[a];
+      var areaName = a.toString();
+      addArea(areaName);
+      for (var d in area) {
+          var device = area[d];
+          var deviceName = d.toString();
+          var dependencies = JSON.stringify(device["Dependencies"]);
+          dependencies = dependencies.replace('[','');
+          dependencies = dependencies.replace(']','');
+          var states = JSON.stringify(device["States"]);
+          states = states.replace('[','');
+          states = states.replace(']','');
+          var actions = JSON.stringify(device["Actions"]);
+          actions = actions.replace('[','');
+          actions = actions.replace(']','');
+          addDevice(deviceName, dependencies, states, actions, areaName)
+      }
+  }
 }
 
 //reads the OPD
 function readOPD(data) {
-    //$.getJSON("./ndf/OPD.json", function(json) {
-
-        var opd = JSON.parse(data);
-        for (var a in opd) {
-            var area = opd[a];
-            var areaName = a.toString();
-            for (var d in area) {
-                var device = area[d];
-                var deviceName = d.toString();
-                for (var p in device) {
-                    var policy = JSON.stringify(device[p]);
-                    addPolicy(areaName, deviceName, policy);
-                }
-            }
-        }
-    //});
+  var opd = JSON.parse(data);
+  for (var a in opd) {
+      var area = opd[a];
+      var areaName = a.toString();
+      for (var d in area) {
+          var device = area[d];
+          var deviceName = d.toString();
+          for (var p in device) {
+              var policy = JSON.stringify(device[p]);
+              addPolicy(areaName, deviceName, policy);
+          }
+      }
+  }
 }
 //********************End Loading NDF *****************//
 
@@ -471,19 +453,17 @@ function addChange(type, description) {
 //*********************BUILDING AND SHIPPING OF NDF****************************//
 //Function to construct the NDF file for a user network
 $('#submitNDF').click(function buildNDF() {
-  var stream = fs.createWriteStream('./resources/app/' + ndfFilename);
-  stream.write(username + ',' + networkName + '\n{');
-  for (var i = 0; i < currentNetwork.areaList.length; i++) {
-    stream.write(currentNetwork.areaList[i].printArea());
-  }
-  stream.write('}\n{');
-  for (var i = 0; i < currentNetwork.areaList.length; i++) {
-	  stream.write(currentNetwork.areaList[i].printAreaPolicies());
-  }
-  stream.write('}')
+  var stream = fs.createWriteStream('./resources/app/' + ndfFilePath);
+  stream.write(username + ',' + networkName + '\n')
+  stream.write(currentNetwork.printNetwork() + '\n');
+  stream.write(currentNetwork.printNetworkPolicies());
   stream.end();
-
-  sendNDF(); //Send constructed NDF to compess
+  //clear the current changes table
+  clearChangesTable();
+  setTimeout(function(){ //allow addChange to execute before refresh
+    changesTable.ajax.reload();
+    sendNDF(); //Send constructed NDF to compess
+  }, 100);
 
   //visual update of submit below submit button
   var date = new Date();
@@ -493,7 +473,7 @@ $('#submitNDF').click(function buildNDF() {
 //Function to ship constructed NDF to CoMPES
 function sendNDF(){
   	var ndfVar;
-  	fs.readFile("./resources/app/Team05-cheek212A.ndf", 'utf8', function(err, txt)  {
+  	fs.readFile("./resources/app/ndf/" + ndfFilename, 'utf8', function(err, txt)  {
   		if (err) throw err;
   		console.log(txt);
   		ndfVar = txt;
@@ -518,6 +498,50 @@ function sendNDF(){
 }
 
 //**************END BUILDING AND SHIPPING OF NDF**************************//
+
+//********************CLEAN WORKSPACE ******************//
+//function to clear any data before the session ends
+window.onunload = function(){
+  clearAreas();
+  clearChangesTable();
+  deleteAreaFiles("./resources/app/json/area_devices");
+}
+
+//emptys the areas.json file
+function clearAreas() {
+    $.getJSON("./json/areas.json", function(json) {
+        json.areaData = [];
+        var stream = fs.createWriteStream('./resources/app/json/areas.json');
+        stream.write(JSON.stringify(json));
+        stream.end();
+    });
+}
+
+//emptys the current changes table
+function clearChangesTable() {
+    $.getJSON("./json/changes.json", function(json) {
+        json.changeData = [];
+        var stream = fs.createWriteStream('./resources/app/json/changes.json');
+        stream.write(JSON.stringify(json));
+        stream.end();
+    });
+}
+
+//deletes all files in the ./json/area_devices folder
+function deleteAreaFiles(dirPath) {
+  try { var files = fs.readdirSync(dirPath); }
+  catch(e) { return; }
+  if (files.length > 0){
+    for (var i = 0; i < files.length; i++) {
+      var filePath = dirPath + '/' + files[i];
+      if (fs.statSync(filePath).isFile())
+        fs.unlinkSync(filePath);
+      else
+        deleteAreaFiles(filePath);
+    }
+  }
+};
+//********************END CLEAN WORKSPACE **************//
 
 $('#areaSelect').change(function() {
   loadAreaDeviceTable($('#areaSelect').val());
@@ -634,30 +658,4 @@ function logout(password) {
 		}
 	});
 
-}
-
-//Deletes temp Area files in a given path
-function deleteAreaFiles(dirPath) {
-  try { var files = fs.readdirSync(dirPath); }
-  catch(e) { return; }
-  if (files.length > 0){
-    for (var i = 0; i < files.length; i++) {
-      var filePath = dirPath + '/' + files[i];
-      if (fs.statSync(filePath).isFile())
-        fs.unlinkSync(filePath);
-      else
-        deleteAreaFiles(filePath);
-    }
-  }
-};
-
-//function that fires on window close
-window.onunload = function(){
-  $.getJSON("./resources/app/json/areas.json", function(json) {
-    json.areaData.length = 0;
-    var stream = fs.createWriteStream('./resources/app/json/areas.json');
-    stream.write(JSON.stringify(json));
-    stream.end();
-  });
-  deleteAreaFiles("./resources/app/json/area_devices");
 }
