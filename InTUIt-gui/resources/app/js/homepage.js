@@ -14,6 +14,7 @@ var qs = require('querystring');
 
 var username = 'generic'; //Variable for logged in user. Default is 'generic'
 var networkName = 'network'; //Variable for current network. Default is 'network'
+var password;
 
 var areaList = new Array(); //Array of all areas in the Network
 var deviceList = new Array(); //Array of all ACUs in the Network
@@ -128,14 +129,37 @@ var Policy = function (area, device, givenStates, command) {
 }
 //-----------------------------------------------------------------------------
 
-
+var timerCount = 0;
 //script that executes once index page is fully loaded
 $(document).ready(function() {
   var queryString = window.location.search
   username = getQueryVariable('userName', queryString);
   networkName = getQueryVariable('networkName', queryString);
-  var ndfFilename = username + '-' + networkName + '.ndf'; //file name to write NDF to
-
+  var ndfFilename = username + '-' + networkName + '.ndf'; 
+	
+	//get password and store value
+	$.ajax({
+		url: 'http://146.7.44.180:8080/users',
+		method:'GET',
+		success: function(data, status, xhttp){
+			//alert(data); //returns a JSON array that has all the user's credentials and network info
+			var userprof = JSON.parse(data);
+			password = (userprof["Password"]);
+		},
+		error: function(data, status, xhttp)
+		{
+			alert(data); //all these error throws will just be debugging. the user should never see them
+		}
+	});
+	
+  //Start timeout interval
+  var timeOut = setInterval(timer, 60000);
+  $(this).mousemove(function(e) {
+	  timerCount = 0;
+  });
+  $(this).keypress(function(e) {
+	  timerCount = 0;
+  });
   
   //Populate the Username and Network Fields bassed on Login
   $('#user-name').html('User: ' + username);
@@ -148,15 +172,12 @@ $(document).ready(function() {
   $('#logout-modal-load').load('./html/modals/logout-modal.html');
   $('#network-modal-load').load('./html/modals/login_network.html');
   $('#delete-modal-load').load('./html/modals/delete_modal.html');
-  
   $('#offcanvasleft').click(function() {
-  $('.row-offcanvas-left').toggleClass('active');
-});
-
-$('[data-toggle=offcanvasright]').click(function() {
-  $('.row-offcanvas-right').toggleClass('active');
-});
-
+	  $('.row-offcanvas-left').toggleClass('active');  
+	});
+	$('[data-toggle=offcanvasright]').click(function() {
+	  $('.row-offcanvas-right').toggleClass('active');
+	});
   $('#addDeviceFor').submit(function(e){
     console.log('test');
     e.preventDefault(); //prevent form from redirect
@@ -166,13 +187,22 @@ $('[data-toggle=offcanvasright]').click(function() {
     }, 100);
     addDevice();
   });
-
   $('#addAreaForm').submit(function(e){
     console.log("test");
     e.preventDefault(); //prevent form from redirect
     this.reset(); //resets the fields within the form
   });
 });
+
+//Auto timeout function
+function timer() {
+	timerCount = timerCount + 1;
+	if (timerCount > 14) {
+		alert("You have been logged out due to inactivity");
+		logout();
+	}
+}
+
 
 //Function to construct the NDF file for a user network
 $('#submitNDF').click(function buildNDF() {
@@ -214,13 +244,13 @@ $(document).on('click', '#networkQuery', function(event) {
 	}
 });
 
-function logout(password) {
+function logout() {
 	$.ajax({
 		url: 'http://146.7.44.180:8080/signIn?' + $.param({"userID": username, "mode": "Lout"}),
 		method:'PUT',
 		data: {userPass: password},
 		success: function(data, status, xhttp){
-			alert(data); //tells you that you logged out
+			alert("Logged out. Redirecting to login screen."); //tells you that you logged out
 			window.location.href="./loginIndex.html";
 		},
 		error: function(data, status, xhttp)
@@ -279,6 +309,9 @@ $('#add-device-button').click(function() {
   }
 });
 
+//timeout after 3 sec
+
+
 //enables-disables the new network name field
 function enableNewNetwork()
 {
@@ -313,9 +346,7 @@ function listNetworks() {
 		success: function(data, xhr){
 			alert(data); //returns a JSON array that has all the user's credentials and network info
 			var userprof = JSON.parse(data);
-			console.log(userprof["Provisioned-Networks"][0]);
 			networks = userprof["Provisioned-Networks"];
-			console.log(networks);
 			selectNetwork(networks);
 			/*for (var i = 0; i < userprof["Provisioned-Networks"].length; i++)
 			{
@@ -369,22 +400,3 @@ function deleteSomething() {
 		//error
 	}
 };
-
-//load user profile ajax call
-$(document).on('click', '#logout-redirect', function(event) {
-	$.ajax({
-		url: 'http://146.7.44.180:8080/users',
-		method:'GET',
-		success: function(data, status, xhttp){
-			alert(data); //returns a JSON array that has all the user's credentials and network info
-			var userprof = JSON.parse(data);
-			var pass = (userprof["Password"]);
-			console.log(pass);
-			logout(pass);
-		},
-		error: function(data, status, xhttp)
-		{
-			alert(data); //all these error throws will just be debugging. the user should never see them
-		}
-	});
-});

@@ -145,13 +145,12 @@ function ndfQuery() {
 		$.ajax({
 			url: 'http://146.7.44.180:8080/NDF?' + $.param({"netID": networkName}), //put network ID here
 			method:'GET',
-			success: function(data, xhr){
-				alert('create new network!');
+			success: function(data, status, xhttp){
 				window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
 			},
-			error: function(xhr, data, errorThrown)
+			error: function(data, status, xhttp)
 			{
-				alert('no new network created!');
+				alert('There has been an Ajax error');
 			}
 		});
 	} else {
@@ -159,20 +158,18 @@ function ndfQuery() {
 		$.ajax({
 			url: 'http://146.7.44.180:8080/NDF?' + $.param({"netID": networkName}), //put network ID here
 			method:'GET',
-			success: function(data, xhr){
+			success: function(data, status, xhttp){
 				var ndfData = data.split('\n');	
 				var stream = fs.createWriteStream('./resources/app/ndf/' + userName + "-" + networkName);
 				for (var i = 0; i < ndfData.length; i++) {
 					stream.write(ndfData[i] + '\n');
 				}
 				stream.end();
-				alert('redirecting to network!');
 				//data is the received NDF. it's a giant string (with newline characters)
 				window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
 			},
-			error: function(data, status, xhr)
+			error: function(data, status, xhttp)
 			{
-				alert('no redirect no network!');
 				console.log(typeof data);
 				alert((data));
 			}
