@@ -13,10 +13,10 @@ var qs = require('querystring');
 
 var username; //Variable for logged in user.
 var networkName; //Variable for current network.
-var ndfFilename;
+var ndfFilePath;
 
-var areaList = new Array(); //Array of all areas in the Network
-var deviceList = new Array(); //Array of all ACUs in the Network
+var currentNetwork; //Holds the entire network structure
+
 var ndfLoaded = false; //Variable to hold the load status of NDF
 
 var deviceTable;
@@ -29,7 +29,8 @@ $(document).ready(function() {
   var queryString = window.location.search
   username = getQueryVariable('userName', queryString);
   networkName = getQueryVariable('networkName', queryString);
-  ndfFilename = username + '-' + networkName + '.ndf'; //file name to write NDF to
+  ndfFilePath = "./NDF/" + username + '-' + networkName + '.ndf'; //file name to write NDF to
+  currentNetwork = new Network(networkName, username);
 
   //Populate the Username and Network Fields bassed on Login
   $('#user-name').html('User: ' + username);
@@ -56,80 +57,28 @@ $(document).ready(function() {
     }
   });
 
-  //clear any data from previous session
-  cleanWorkspace();
+  //read the user's ndf file
+  readNDF();
 
-  //delay execution to allow cleanWorkspace to complete
-  //setTimeout(function() {readNDF();}, 10000);
+  setTimeout(function() { ndfLoaded = true; }, 5000)  //*************************Need to do a callback function with this
+                                                                            // This is so the change table will not try to update while the NDF is being loaded
 });
 //---end document.ready() calls
-
-//********************CLEAN WORKSPACE ******************//
-//function to clear any data from previous a previous session
-function cleanWorkspace() {
-    clearNSDO();
-    clearOPD();
-    clearAreas();
-    clearChangesTable();
-}
-
-//emptys the NSDO.json file
-function clearNSDO() {
-    $.getJSON("./NDF/NSDO.json", function(json) {
-        json.NSDOdata = [];
-        var stream = fs.createWriteStream('./resources/app/NDF/NSDO.json');
-        stream.write(JSON.stringify(json));
-        stream.end();
-    });
-}
-
-//emptys the OPD.json file
-function clearOPD() {
-    $.getJSON("./NDF/OPD.json", function(json) {
-        json.OPDdata = [];
-        var stream = fs.createWriteStream('./resources/app/NDF/OPD.json');
-        stream.write(JSON.stringify(json));
-        stream.end();
-    });
-}
-
-//emptys the areas.json file
-function clearAreas() {
-    $.getJSON("./json/areas.json", function(json) {
-        json.areaData = [];
-        var stream = fs.createWriteStream('./resources/app/json/areas.json');
-        stream.write(JSON.stringify(json));
-        stream.end();
-    });
-}
-
-//emptys the current changes table
-function clearChangesTable() {
-    $.getJSON("./json/changes.json", function(json) {
-        json.changeData = [];
-        var stream = fs.createWriteStream('./resources/app/json/changes.json');
-        stream.write(JSON.stringify(json));
-        stream.end();
-    });
-}
-//********************END CLEAN WORKSPACE **************//
 
 //********************LOADING NDF **********************//
 //function to read NDF
 function readNDF() {
     //put NDF data into json files
-    $.get("./NDF/testClient-testNetwork.ndf", function(txt) {
+    $.get(ndfFilePath, function(txt) {
         var lines = txt.split("\n");
         $.getJSON("./NDF/NSDO.json", function(json) {
-            var nsdo = JSON.parse(lines[1]);
-            json.NSDOdata = nsdo;
+            json.NSDOdata = JSON.parse(lines[1]);
             var stream = fs.createWriteStream('./resources/app/NDF/NSDO.json');
             stream.write(JSON.stringify(json));
             stream.end();
         });
         $.getJSON("./NDF/OPD.json", function(json) {
-            var opd = JSON.parse(lines[2]);
-            json.OPDdata.push(opd);
+            json.OPDdata = JSON.parse(lines[2]);
             var stream = fs.createWriteStream('./resources/app/NDF/OPD.json');
             stream.write(JSON.stringify(json));
             stream.end();
@@ -137,7 +86,7 @@ function readNDF() {
     });
     setTimeout(function() {
         readNSDO();
-        //readOPD();
+        readOPD();
         //setTimeout(function() {ndfLoaded = true;}, 1000);
     }, 1000);
 }
@@ -154,18 +103,38 @@ function readNSDO() {
                 var device = area[d];
                 var deviceName = d.toString();
                 var dependencies = JSON.stringify(device["Dependencies"]);
+                dependencies = dependencies.replace('[','');
+                dependencies = dependencies.replace(']','');
                 var states = JSON.stringify(device["States"]);
+                states = states.replace('[','');
+                states = states.replace(']','');
                 var actions = JSON.stringify(device["Actions"]);
+                actions = actions.replace('[','');
+                actions = actions.replace(']','');
                 addDevice(deviceName, dependencies, states, actions, areaName)
             }
         }
     });
 }
 
-
-
-
-
+//reads the OPD
+function readOPD() {
+    $.getJSON("./NDF/OPD.json", function(json) {
+        var opd = json["OPDdata"];
+        for (var a in opd) {
+            var area = opd[a];
+            var areaName = a.toString();
+            for (var d in area) {
+                var device = area[d];
+                var deviceName = d.toString();
+                for (var p in device) {
+                    var policy = JSON.stringify(device[p]);
+                    addPolicy(areaName, deviceName, policy);
+                }
+            }
+        }
+    });
+}
 //********************End Loading NDF *****************//
 
 //********************ADDING AN AREA *****************//
@@ -208,24 +177,24 @@ $('#addAreaForm').submit(function(e){
 
 //Adding an area into the network
 function addArea(areaName) {
-  areaList.push(new Area(areaName));
+  currentNetwork.areaList.push(new Area(areaName));
   //update the slectable list of areas in the add acu form
   $('#areaSelect').empty();
   $('#areaSelect').append('<option value=\"none\" selected>Select an Area</option>');
   $('#areaSelect2').empty();
   $('#areaSelect2').append('<option value=\"none\" selected>Select an Area</option>');
   $('#areaSelect3').empty();
-  for (var i = 0; i < areaList.length; i++) {
-	  var area = areaList[i];
+  for (var i = 0; i < currentNetwork.areaList.length; i++) {
+	  var area = currentNetwork.areaList[i];
 	  $('#areaSelect').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
     $('#areaSelect2').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
     $('#areaSelect3').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
   }
-  /*
+
   var stream = fs.createWriteStream('./resources/app/json/area_devices/' + areaName + '-devices.json');
   stream.write(JSON.stringify({'deviceData':[]}));
   stream.end();
-  */
+
   var date = new Date();
   $.getJSON("./json/areas.json", function(json) {
     var deviceJSON = [date.toLocaleString(), areaName];
@@ -236,8 +205,10 @@ function addArea(areaName) {
   });
 
   //add to current changes table
-  var description = 'Name: ' + areaName;
-  if (ndfLoaded) {addChange("Area Added", description);};
+  if (ndfLoaded) {
+      var description = 'Name: ' + areaName;
+      addChange("Area Added", description);
+  };
   //add area node to the network visualization
   addAreaNode(areaName);
 }
@@ -245,7 +216,7 @@ function addArea(areaName) {
 //********************REMOVING AN AREA **********************//
 //Prefires for when user clicks Remove Area button
 $('#remove-area-button').click(function() {
-  if (areaList.length == 0) {
+  if (currentNetwork.areaList.length == 0) {
     alert("No areas have been created. Please create one");
   }
   else {
@@ -266,12 +237,12 @@ $('#removeAreaForm').submit(function(e){
 
 //Removing an Area from the network
 function removeArea(areaName) {
-  for(var i = 0; i < this.areaList.length; i++) {
-      if(this.areaList[i].areaName == areaName)
-          this.areaList.splice(i, 1);
+  for(var i = 0; i < this.currentNetwork.areaList.length; i++) {
+      if(this.currentNetwork.areaList[i].areaName == areaName)
+          this.currentNetwork.areaList.splice(i, 1);
   }
 
-  if(areaList.length == 0){
+  if(currentNetwork.areaList.length == 0){
     alert("no more areas");
     $('#remove-area-modal').modal('hide');
   }
@@ -291,8 +262,8 @@ function removeArea(areaName) {
   $('#areaSelect2').empty();
   $('#areaSelect2').append('<option value=\"none\" selected>Select an Area</option>');
   $('#areaSelect3').empty();
-  for (var i = 0; i < areaList.length; i++) {
-	  var area = areaList[i];
+  for (var i = 0; i < currentNetwork.areaList.length; i++) {
+	  var area = currentNetwork.areaList[i];
 	  $('#areaSelect').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
     $('#areaSelect2').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
     $('#areaSelect3').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
@@ -307,7 +278,7 @@ function removeArea(areaName) {
 //*********************ADDING AN ACU *********************//
 //Create Device Datatable when button to summon modal is clicked
 $('#add-device-button').click(function() {
-  if (areaList.length == 0) {
+  if (currentNetwork.areaList.length == 0) {
     //e.preventDefault();
     alert("No areas have been created. Please create one");
   }
@@ -353,10 +324,13 @@ function addDevice(deviceName, dependencies, states, actions, areaSelect) {
     stream.write(JSON.stringify(json));
     stream.end();
   });
+
   //add to current changes table
-  var description = 'Name: ' + deviceName + '<br/>States: ' + states +
-                    '<br/>Actions: ' + actions + '<br/>Dependencies: ' + dependencies;
-  if (ndfLoaded) { addChange("Device Added", description); };
+    if (ndfLoaded) {
+        var description = 'Name: ' + deviceName + '<br/>States: ' + states + '<br/>Actions: '
+                        + actions + '<br/>Dependencies: ' + dependencies;
+        addChange("Device Added", description);
+    };
   //add acu node to the network visualization
   addDeviceNode(deviceName, areaSelect);
 }
@@ -365,7 +339,7 @@ function addDevice(deviceName, dependencies, states, actions, areaSelect) {
 //*************************REMOVING AN ACU ********************//
 //Prefires for when user clicks Remove Device button
 $('#remove-device-button').click(function() {
-  if (areaList.length == 0) {
+  if (currentNetwork.areaList.length == 0) {
     alert("No areas have been created. Please create one");
   }
   else {
@@ -416,7 +390,7 @@ function removeDevice(area, device) {
 //********************ADDING A POLICY TO AN ACU*********************//
 //Prefires for when user clicks Add Policy button
 $('#add-policy-button').click(function() {
-  if (areaList.length == 0) {
+  if (currentNetwork.areaList.length == 0) {
     alert("No areas have been created. Please create one");
   }
   else {
@@ -429,28 +403,32 @@ $('#add-policy-button').click(function() {
 //event fires upon adding a policy
 $('#createPolicyForm').submit(function(e){
   e.preventDefault();
-  addPolicy();
+  var policyArea = $('#policyArea').val();
+  var policyDevice = $('#policyDevice').val();
+  var policy = "Given {" + $('#givenStates').val() + "} associate " + $('#associatedCommand').val();
+  addPolicy(policyArea, policyDevice, policy);
   this.reset();
   $('#policyArea').focus();
 });
 
 //Adding a policy to an existing ACU
-function addPolicy() {
-  var tempPolicy = new Policy($('#policyArea').val(), $('#policyDevice').val(), $('#givenStates').val(), $('#associatedCommand').val());
-  var policyArea = findArea($('#policyArea').val());
-  var policyACU = findACU($('#policyDevice').val(), policyArea);
-  policyACU.addPolicy(tempPolicy);
+function addPolicy(policyArea, policyDevice, policy) {
+  var tempPolicy = new Policy(policyArea, policyDevice, policy);
+  var area = findArea(policyArea);
+  var device = findACU(policyDevice, area);
+  device.addPolicy(tempPolicy);
   //add to current changes table
-  var description = 'Policy: Given ' + $('#givenStates').val() + ' associate ' + $('#associatedCommand').val() +
-                    '<br/>Device: ' + $('#policDevice').val() + '<br/>Area: ' + $('#policyArea').val();
-  addChange("Policy Added", description);
+  if (ndfLoaded) {
+      var description = 'Policy: ' + policy + '<br/>Device: ' + policyDevice + '<br/>Area: ' + policyArea;
+      addChange("Policy Added", description);
+  };
 }
 
 
 //*****************REMOVING A POLICY FROM AN ACU***************//
 //Prefires for when user clicks Add Policy button
 $('#remove-policy-button').click(function() {
-  if (areaList.length == 0) {
+  if (currentNetwork.areaList.length == 0) {
     alert("No areas have been created. Please create one");
   }
   else {
@@ -485,16 +463,10 @@ function addChange(type, description) {
 
 //Function to construct the NDF file for a user network
 $('#submitNDF').click(function buildNDF() {
-  var stream = fs.createWriteStream('./resources/app/' + ndfFilename);
-  stream.write(username + ',' + networkName + '\n{');
-  for (var i = 0; i < areaList.length; i++) {
-    stream.write(areaList[i].printArea());
-  }
-  stream.write('}\n{');
-  for (var i = 0; i < areaList.length; i++) {
-	  stream.write(areaList[i].printAreaPolicies());
-  }
-  stream.write('}')
+  var stream = fs.createWriteStream('./resources/app/' + ndfFilePath);
+  stream.write(username + ',' + networkName + '\n')
+  stream.write(currentNetwork.printNetwork() + '\n');
+  stream.write(currentNetwork.printNetworkPolicies());
   stream.end();
   //clear the current changes table
   clearChangesTable();
@@ -561,12 +533,80 @@ $('#logout-button').click(function() {
   }
 });
 
+//********************CLEAN WORKSPACE ******************//
+//function to clear any data before the session ends
+window.onunload = function(){
+  clearAreas();
+  clearChangesTable();
+  clearNSDO();
+  clearOPD();
+  deleteAreaFiles("./resources/app/json/area_devices");
+}
+
+//emptys the areas.json file
+function clearAreas() {
+    $.getJSON("./json/areas.json", function(json) {
+        json.areaData = [];
+        var stream = fs.createWriteStream('./resources/app/json/areas.json');
+        stream.write(JSON.stringify(json));
+        stream.end();
+    });
+}
+
+//emptys the current changes table
+function clearChangesTable() {
+    $.getJSON("./json/changes.json", function(json) {
+        json.changeData = [];
+        var stream = fs.createWriteStream('./resources/app/json/changes.json');
+        stream.write(JSON.stringify(json));
+        stream.end();
+    });
+}
+
+//emptys the NSDO json
+function clearNSDO() {
+    $.getJSON("./NDF/NSDO.json", function(json) {
+        json.NSDOdata = [];
+        var stream = fs.createWriteStream('./resources/app/NDF/NSDO.json');
+        stream.write(JSON.stringify(json));
+        stream.end();
+    });
+}
+
+//emptys the OPD json
+function clearOPD() {
+    $.getJSON("./NDF/OPD.json", function(json) {
+        json.OPDdata = [];
+        var stream = fs.createWriteStream('./resources/app/NDF/OPD.json');
+        stream.write(JSON.stringify(json));
+        stream.end();
+    });
+}
+
+//deletes all files in the ./json/area_devices folder
+function deleteAreaFiles(dirPath) {
+  try { var files = fs.readdirSync(dirPath); }
+  catch(e) { return; }
+  if (files.length > 0){
+    for (var i = 0; i < files.length; i++) {
+      var filePath = dirPath + '/' + files[i];
+      if (fs.statSync(filePath).isFile())
+        fs.unlinkSync(filePath);
+      else
+        deleteAreaFiles(filePath);
+    }
+  }
+};
+
+//********************END CLEAN WORKSPACE **************//
+
+
 /********************** GENERAL PROGRAM METHOD CALLS ***********************/
 //Finds a created area in the list of areas
 function findArea(name) {
-	for (var i = 0; i < areaList.length; i++) {
-		if (areaList[i].areaName == name){
-			return areaList[i];
+	for (var i = 0; i < currentNetwork.areaList.length; i++) {
+		if (currentNetwork.areaList[i].areaName == name){
+			return currentNetwork.areaList[i];
 		}
 	}
 	console.log("findArea: Could not find area specified")

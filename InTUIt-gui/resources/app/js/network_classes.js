@@ -29,15 +29,6 @@ var Network = function (networkName, userName) {
         }
     }
 
-    /* Unsure if this will be possible
-    this.getArea = function getArea(areaName) {
-        for(var i = 1; i < this.areaList.length; i++) {
-            if(this.areaList[i].areaName == areaName)
-                return this.areaList[i];
-        }
-    }
-    */
-
     this.hasPolicy = function hasPolicy() {
         for(var i = 0; i < this.areaList.length; i++) {
             if(this.areaList[i].hasPolicy()) { return true; }
@@ -46,30 +37,26 @@ var Network = function (networkName, userName) {
     }
 
     this.printNetwork = function printNetwork() {
-        var networkString = "";
-        if (this.areaList.length > 0) {
-            networkString += "{";
-            for (var i; i < this.areaList.length; i++) {
-                networkSting += this.areaList[i].printArea();
-                if (i + 1 != this.areaList.length) { networkString += ', '; }
-            }
-            networkString += "}";
+        var networkString = "{";
+        for (var i = 0; i < this.areaList.length; i++) {
+            networkString += this.areaList[i].printArea();
+            if (i + 1 != this.areaList.length) { networkString += ', '; }
         }
+        networkString += "}";
         return networkString;
     }
 
     this.printNetworkPolicies = function printNetworkPolicies() {
-        var networkPolicyString = "";
-        if (this.hasPolicy()) {
-            networkPolicyString = "{";
-            for (var i; i < this.areaList.length; i++) {
-                if(this.areaList[i].hasPolicy()) {
-                    networkPolicyString += this.areaList[i].printAreaPolicies();
-                }
-                if(this.areaList[i+1].hasPolicy()) { networkPolicyString += ", "; }
+        var networkPolicyString = "{";
+        var firstPrinted = false;
+        for (var i = 0; i < this.areaList.length; i++) {
+            if(this.areaList[i].hasPolicy()) {
+                if(firstPrinted) {networkPolicyString += ", ";}
+                networkPolicyString += this.areaList[i].printAreaPolicies();
+                firstPrinted = true;
             }
-            networkPolicyString += "}";
         }
+        networkPolicyString += "}";
         return networkPolicyString;
     }
 }
@@ -104,10 +91,10 @@ var Area = function (areaName) {
     }
 
     this.printArea = function printArea() {
-        var areaString = "\"" + this.areaName + "\" :{";
+        var areaString = "\"" + this.areaName + "\": {";
         for (var i = 0; i < this.acuList.length; i++) {
             areaString += this.acuList[i].printACU();
-            if (i + 1 < this.acuList.length) { areaString += ", "; }
+            if (i + 1 != this.acuList.length) { areaString += ", "; }
         }
         areaString += "}";
         return areaString;
@@ -115,11 +102,13 @@ var Area = function (areaName) {
 
     this.printAreaPolicies = function printAreaPolicies() {
         var areaPolicyString = "\"" + this.areaName + "\": {";
+        var firstPrinted = false;
         for (var i = 0; i < this.acuList.length; i++) {
             if(this.acuList[i].hasPolicy()) {
+                if (firstPrinted) {areaPolicyString += ", "};
                 areaPolicyString += this.acuList[i].printACUPolicies();
+                firstPrinted = true;
             }
-            //if(this.acuList[i+1].hasPolicy()){ areaPolicyString += ", "; } errors out the build of ndf
         }
         areaPolicyString += "}"
         return areaPolicyString;
@@ -155,14 +144,14 @@ var ACU = function (acuName, dependencies, states, actions, area) {
     this.printACU = function printACU() {
         return "\"" + this.acuName + "\": {\"Dependencies\": [" +
                this.dependencies + "], \"States\": [" + this.states +
-               "], \"Actions\": [" + this.actions + "]},";
+               "], \"Actions\": [" + this.actions + "]}";
     }
 
     this.printACUPolicies = function printACUPolicies() {
         var acuPolicyString = "\"" + this.acuName + "\": [";
         for (var i = 0; i < this.policyList.length; i++) {
             acuPolicyString += this.policyList[i].printPolicy();
-            if (i + 1 == this.policyList.length) { acuPolicyString += ", "; }
+            if (i + 1 != this.policyList.length) { acuPolicyString += ", "; }
         }
         acuPolicyString += "]"
         return acuPolicyString;
@@ -175,15 +164,14 @@ var ACU = function (acuName, dependencies, states, actions, area) {
 This class represents a Policy that is being enforced on the Network. A Policy
 is associated to a specific ACU.
 ******************************************************************************/
-var Policy = function (area, device, givenStates, command) {
+var Policy = function (area, device, policy) {
   // VARIABLES
     this.area = area;
     this.device = device;
-    this.givenStates, givenStates;
-    this.command = command;
+    this.policy = policy;
 
   // METHODS
     this.printPolicy = function printPolicy() {
-        return "\"Given {" + givenStates + "} associate " + command + "\"";
+        return policy;
     }
 }
