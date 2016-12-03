@@ -14,26 +14,30 @@
    </head>
 
    <body>
-     <div class="container">
-   		<h1>Welcome to InTUIt</h1>
-   		<form id="login">
-   			<div class="form-group">
-   				<label for="userName">User:</label>
-   				<input type="text" class="login-box form-control" id="userName" placeholder="User1" required> <br>
-				<label for="password">Password:</label>
-				<input type="password" class="login-box form-control" id="password" placeholder="Password" required> <br>
-        </div>
-        <hr>
-        <button type="button" class="btn btn-primary">Create New Account</button>
-        <button type="submit" class="btn btn-primary" value="Submit" id="loginQuery" data-toggle="modal" data-target="#network-modal">Login</button>
+		<div class="container">
+			<h1>Welcome to InTUIt</h1>
+			<form id="login">
+				<div class="form-group">
+					<label for="userName">User:</label>
+					<input type="text" class="login-box form-control" id="userName" placeholder="User1" required> <br>
+					<label for="password">Password:</label>
+					<input type="password" class="login-box form-control" id="password" placeholder="Password" required> <br>
+				</div>
+				<hr>
+				<button type="button" class="btn btn-primary" id="createAccount" data-toggle="modal" data-target="#new-account-modal">Create New Account</button>
+				<button type="submit" class="btn btn-primary" value="Submit" onclick="loginQuery()"> <!--data-toggle="modal" data-target="#network-modal"-->Login</button>
+			</form>
+		</div>
 
-      </form>
-    <div id="choose-network-load"/></div>
 
-   <!-- Script imports for bootstrap here -->
-   <script src="./js/login.js"></script>
-   <script src="./js/tether.min.js"></script>
-   <script src="./js/bootstrap.min.js"></script>
+		<div id="choose-network-load"></div>
+		<div id="new-account-load"></div>
 
-  </body>
+	<!-- Script imports for bootstrap here -->
+	   <script src="./js/login.js"></script>
+	   <script src="./js/tether.min.js"></script>
+	   <script src="./js/jquery.min.js"></script>
+	   <script src="./js/bootstrap.min.js"></script>
+
+	</body>
 </html>

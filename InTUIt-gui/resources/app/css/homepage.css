@@ -92,6 +92,10 @@ while being responsive to its conainer */
 	margin-bottom: 10%;
 }
 
+.selection {
+  white-space: pre;
+}
+
 .white {
 	color: white;
 }

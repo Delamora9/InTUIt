@@ -1,0 +1,31 @@
+<!--Modal for creating new account-->
+
+<div id="new-account-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="AccountModal" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+				</button>
+				<h4 class="modal-title text-center" id="NetworkModalLabel">
+					Create an Account
+				</h4>
+			</div>
+			<div class="modal-body">
+				<form id="newAccount">
+					<div class="form-group">
+						<label for="newUser">Username:</label>
+						<input type="text" class="form-control" id="newUser" placeholder="User1" required> <br>
+						<label for="newPassword">Password:</label>
+						<input type="password" class="form-control" id="newPassword" placeholder="Password" required> <br>
+						<!--<label for="newNetwork">Network name:</label>
+						<input type="text" class="form-control" id="newNetwork" placeholder="Network" required> <br>-->
+					</div>
+					<hr>
+					<button id="logout-redirect" type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+					<button id="newAccount-redirect" class="btn btn-primary" type="button">Create Account</button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
