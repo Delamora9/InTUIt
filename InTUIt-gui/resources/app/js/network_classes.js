@@ -90,8 +90,8 @@ var Area = function (areaName) {
     }
 
     this.removeACU = function removeACU(acuName) {
-        for(var i = 1; i < this.acuList.length; i++) {
-            if(this.acuList[i].areaName == acuName)
+        for(var i = 0; i < this.acuList.length; i++) {
+            if(this.acuList[i].acuName == acuName)
                 this.acuList.splice(i, 1);
         }
     }
@@ -119,7 +119,7 @@ var Area = function (areaName) {
             if(this.acuList[i].hasPolicy()) {
                 areaPolicyString += this.acuList[i].printACUPolicies();
             }
-            if(this.acuList[i+1].hasPolicy()){ areaPolicyString += ", "; }
+            //if(this.acuList[i+1].hasPolicy()){ areaPolicyString += ", "; } errors out the build of ndf
         }
         areaPolicyString += "}"
         return areaPolicyString;
@@ -142,6 +142,22 @@ var ACU = function (acuName, states, dependencies, actions, area) {
     this.policyList = new Array(); //Array of all Policies associated to ACU
 
   // METHODS
+    this.setName = function setDeviceName(name){
+      this.acuName = name;
+    }
+
+    this.setStates = function(acuStates){
+      this.states = acuStates;
+    }
+
+    this.setActions = function(acuActions){
+      this.actions = acuActions;
+    }
+
+    this.setDependencies = function(acuDependencies){
+      this.dependencies = acuDependencies;
+    }
+
     this.addPolicy = function addPolicy(Policy) {
         this.policyList.push(Policy);
     }

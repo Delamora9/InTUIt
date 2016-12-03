@@ -12,17 +12,9 @@ var fs = require('fs');
 
 var userName; //Variable for logged in user. Default is 'generic'
 var networkName; //Variable for current network. Default is 'network'
+var formData;
+var password; //Password of user for login
 
-
-//script that executes once index page is fully loaded
-$(document).ready(function() {
-
-	$("#login").submit(function(e) {
-    e.preventDefault();
-		login();
-	});
-
-});
 
 /* JESS's NEW CODE
 //call function to
@@ -70,15 +62,23 @@ function networkSelect() {
 }
 */
 
-//script that executes once login buton is clicked - display modal
-//var loginButton = document.getElementById("login");
-//loginButton.onclick = function() {
-//	modal.style.display = "block";
-//}
+$(document).ready(function() {
+	$('#choose-network-load').load('./html/login_network.html');
+	$("#login").submit(function(e) {
+    e.preventDefault();
+		login();
+	});
+});
 
 //modal function to log user into system
 function login() {
   userName = $('#userName').val();
-  networkName = $('#networkName').val();
-  window.location.assign('./homepage.html?userName=' + userName +'&networkName=' + networkName);
+  password = $('#password').val();
+  networkName = $('#chooseNetwork').val();
+  	$('#homepage-redirect').click(function() {
+		window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
+	});
+	$('#logout').click(function() {
+		window.location.reload(true);
+	});
 }

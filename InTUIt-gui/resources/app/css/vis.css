@@ -481,8 +481,6 @@ div.vis-color-picker input.vis-range {
 div.vis-color-picker input.vis-range-brightness {
   width: 289px !important;
 }
-
-
 div.vis-color-picker input.vis-saturation-range {
   width: 289px !important;
 }*/
@@ -737,12 +735,10 @@ div.vis-network-tooltip {
 }
 
 /* TODO: get animation working nicely
-
 .vis-item {
   -webkit-transition: top .4s ease-in-out;
   transition:         top .4s ease-in-out;
 }
-
 .vis-item.line {
   -webkit-transition: height .4s ease-in-out, top .4s ease-in-out;
   transition:         height .4s ease-in-out, top .4s ease-in-out;
@@ -1161,7 +1157,7 @@ div.vis-network-tooltip {
   height: 100%;
   overflow-x: hidden;
   overflow-y: scroll;
-} 
+}
 
 .vis-left.vis-panel.vis-vertical-scroll {
   direction: rtl;
