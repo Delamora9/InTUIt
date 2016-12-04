@@ -125,6 +125,8 @@ function listNetworks() {
 }
 
 function selectNetwork(networks){
+	$('#networks').empty();
+	$('#networks').append('<option value="new">Create New...</option>');
 	for (i = 0; i < networks.length; i++)
 	{
 		var name = networks[i];
@@ -133,6 +135,7 @@ function selectNetwork(networks){
 		c.text = name;
 		x.options.add(c, (i-1));
 	}
+	$('#networks>option[value=new]').insertBefore($('select[id=networks]').find('option:eq(0)'))
 	$("#network-modal").modal();
 }
 

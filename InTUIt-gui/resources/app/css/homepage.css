@@ -114,6 +114,7 @@ a.collapse-button:link {
 }
 
 a.logout-button:hover,
+.logout-button:hover,
 a.collapse-button:hover {
 	color: gray;
 	text-decoration: underline;

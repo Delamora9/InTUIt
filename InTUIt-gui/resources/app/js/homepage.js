@@ -336,7 +336,7 @@ function getQueryVariable(variable, queryString) {
   console.log('Query variable %s not found', variable);
 }
 
-//Function to call and populate dropdown list of networks
+//Function to call info for dropdown list
 function listNetworks() {
 	//get user profile. an associative array that has userID, networkID, etc
 	var networks;
@@ -348,10 +348,6 @@ function listNetworks() {
 			var userprof = JSON.parse(data);
 			networks = userprof["Provisioned-Networks"];
 			selectNetwork(networks);
-			/*for (var i = 0; i < userprof["Provisioned-Networks"].length; i++)
-			{
-				networks[i] = userprof["Provisioned-Networks"][i];
-			}*/
 		},
 		error: function(xhr, data, errorThrown)
 		{
@@ -360,6 +356,66 @@ function listNetworks() {
 	});
 }
 
+//function to populate dropdown list
+function selectNetwork(networks){
+	$('#networks').empty();
+	$('#networks').append('<option value="new">Create New...</option>');
+	for (i = 0; i < networks.length; i++)
+	{
+		var name = networks[i];
+		var x = document.getElementById("networks");
+		var c = document.createElement("option");
+		c.text = name;
+		x.options.add(c, (i-1));
+	}
+	$('#networks>option[value=new]').insertBefore($('select[id=networks]').find('option:eq(0)'))
+	$("#network-modal").modal();
+}
+
+function ndfQuery() {
+	//set networkName
+	var networkName = document.getElementById('networks').value;
+	//this call is failing
+	if (networkName == 'new') {
+		networkName = $('#newNetwork').val();
+		$.ajax({
+			url: 'http://146.7.44.180:8080/NDF?' + $.param({"netID": networkName}), //put network ID here
+			method:'GET',
+			success: function(data, status, xhttp){
+				console.log('if success');
+				window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
+			},
+			error: function(data, status, xhttp)
+			{
+				console.log('if error');
+				alert('There has been an Ajax error');
+			}
+		});
+	} else {
+		//get NDF based on networkName
+		$.ajax({
+			url: 'http://146.7.44.180:8080/NDF?' + $.param({"netID": networkName}), //put network ID here
+			method:'GET',
+			success: function(data, status, xhttp){
+				var ndfData = data.split('\n');	
+				var stream = fs.createWriteStream('./resources/app/ndf/' + userName + "-" + networkName);
+				for (var i = 0; i < ndfData.length; i++) {
+					stream.write(ndfData[i] + '\n');
+				}
+				stream.end();
+				console.log('else success');
+				//data is the received NDF. it's a giant string (with newline characters)
+				window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
+			},
+			error: function(data, status, xhttp)
+			{
+				console.log('else error');
+				console.log(typeof data);
+				alert((data));
+			}
+		});
+	}
+}
 
 //FUNCTION TO DELETE USER/NETWORK
 function deleteSomething() {
