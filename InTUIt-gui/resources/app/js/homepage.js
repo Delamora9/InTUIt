@@ -60,8 +60,6 @@ $(document).ready(function() {
   //read the user's ndf file
   readNDF();
 
-  setTimeout(function() { ndfLoaded = true; }, 5000)  //*************************Need to do a callback function with this
-                                                                            // This is so the change table will not try to update while the NDF is being loaded
 });
 //---end document.ready() calls
 
@@ -84,11 +82,11 @@ function readNDF() {
             stream.end();
         });
     });
-    setTimeout(function() {
+    setTimeout(function() {                     //ONLY ISSUE with async functions*****************************************************************
         readNSDO();
-        readOPD();
+        setTimeout(function() {readOPD();}, 2000);
         //setTimeout(function() {ndfLoaded = true;}, 1000);
-    }, 1000);
+    }, 2000);
 }
 
 //reads the NSDO
@@ -98,21 +96,23 @@ function readNSDO() {
         for (var a in nsdo) {
             var area = nsdo[a];
             var areaName = a.toString();
-            addArea(areaName);
-            for (var d in area) {
-                var device = area[d];
-                var deviceName = d.toString();
-                var dependencies = JSON.stringify(device["Dependencies"]);
-                dependencies = dependencies.replace('[','');
-                dependencies = dependencies.replace(']','');
-                var states = JSON.stringify(device["States"]);
-                states = states.replace('[','');
-                states = states.replace(']','');
-                var actions = JSON.stringify(device["Actions"]);
-                actions = actions.replace('[','');
-                actions = actions.replace(']','');
-                addDevice(deviceName, dependencies, states, actions, areaName)
-            }
+            addArea(areaName, false);
+            setTimeout(function() { //timeout to let the creation of the area-devices.json complete first
+                for (var d in area) {
+                    var device = area[d];
+                    var deviceName = d.toString();
+                    var dependencies = JSON.stringify(device["Dependencies"]);
+                    dependencies = dependencies.replace('[','');
+                    dependencies = dependencies.replace(']','');
+                    var states = JSON.stringify(device["States"]);
+                    states = states.replace('[','');
+                    states = states.replace(']','');
+                    var actions = JSON.stringify(device["Actions"]);
+                    actions = actions.replace('[','');
+                    actions = actions.replace(']','');
+                    addDevice(deviceName, dependencies, states, actions, areaName, false);
+                }
+            }, 200);
         }
     });
 }
@@ -129,7 +129,7 @@ function readOPD() {
                 var deviceName = d.toString();
                 for (var p in device) {
                     var policy = JSON.stringify(device[p]);
-                    addPolicy(areaName, deviceName, policy);
+                    addPolicy(areaName, deviceName, policy, false);
                 }
             }
         }
@@ -170,13 +170,13 @@ $('#addAreaForm').submit(function(e){
   setTimeout(function(){ //allow addArea to execute before refresh
     areaTable.ajax.reload();
   }, 100);
-  addArea($('#areaName').val());
+  addArea($('#areaName').val(), true);
   $('#addAreaForm')[0].reset(); //reset form fields
   $('#areaName').focus();
 });
 
 //Adding an area into the network
-function addArea(areaName) {
+function addArea(areaName, ndfLoaded) {
   currentNetwork.areaList.push(new Area(areaName));
   //update the slectable list of areas in the add acu form
   $('#areaSelect').empty();
@@ -299,23 +299,56 @@ $('#addDeviceForm').submit(function(e){
   }, 100);
 
   var deviceName = $('#deviceName').val();
+
   var dependencies = $('#deviceDependencies').val();
+  var dependencyList = dependencies.split(",");
+  var dependenciesReformat = "";
+  for (var i = 0; i < dependencyList.length; i++) {
+      var dependency = dependencyList[i];
+      dependency = dependency.trim();
+      dependency = "\"" + dependency + "\"";
+      dependenciesReformat += dependency;
+      if(i + 1 != dependencyList.length) { dependenciesReformat += ","};
+  }
+  dependencies = dependenciesReformat;
+
   var states = $('#deviceStates').val();
+  var stateList = states.split(",");
+  var statesReformat = "";
+  for (var i = 0; i < stateList.length; i++) {
+      var state = stateList[i];
+      state = state.trim();
+      state = "\"" + state + "\"";
+      statesReformat += state;
+      if(i + 1 != stateList.length) { statesReformat += ","};
+  }
+  states = statesReformat;
+
   var actions = $('#deviceActions').val();
+  var actionList = actions.split(",");
+  var actionsReformat = "";
+  for (var i = 0; i < actionList.length; i++) {
+      var action = actionList[i];
+      action = action.trim();
+      action = "\"" + action + "\"";
+      actionsReformat += action;
+      if(i + 1 != actionList.length) { actionsReformat += ","};
+  }
+  actions = actionsReformat;
+
   var areaSelect = $('#areaSelect').val();
 
-  addDevice(deviceName, dependencies, states, actions, areaSelect);
+  addDevice(deviceName, dependencies, states, actions, areaSelect, true);
 $('#deviceName').focus();
 });
 
 //Adding a device into the network
-function addDevice(deviceName, dependencies, states, actions, areaSelect) {
+function addDevice(deviceName, dependencies, states, actions, areaSelect, ndfLoaded) {
   var tempDevice = new ACU(deviceName, dependencies, states, actions, areaSelect);
   var deviceArea = findArea(areaSelect);
   deviceArea.addACU(tempDevice);
 
   var date = new Date();
-
   //function call to add the device to the stored json of devices
   $.getJSON("./json/area_devices/" + deviceArea.areaName + "-devices.json", function(json) {
     var deviceJSON = [date.toLocaleString(), deviceName, states, actions, dependencies];
@@ -327,8 +360,8 @@ function addDevice(deviceName, dependencies, states, actions, areaSelect) {
 
   //add to current changes table
     if (ndfLoaded) {
-        var description = 'Name: ' + deviceName + '<br/>States: ' + states + '<br/>Actions: '
-                        + actions + '<br/>Dependencies: ' + dependencies;
+        var description = 'Name: ' + deviceName + '<br/>Area: ' + areaSelect + '<br/>States: ' + states
+                        + '<br/>Actions: ' + actions + '<br/>Dependencies: ' + dependencies;
         addChange("Device Added", description);
     };
   //add acu node to the network visualization
@@ -405,14 +438,14 @@ $('#createPolicyForm').submit(function(e){
   e.preventDefault();
   var policyArea = $('#policyArea').val();
   var policyDevice = $('#policyDevice').val();
-  var policy = "Given {" + $('#givenStates').val() + "} associate " + $('#associatedCommand').val();
-  addPolicy(policyArea, policyDevice, policy);
+  var policy = "\"Given {" + $('#givenStates').val() + "} associate " + $('#associatedCommand').val() + "\"";
+  addPolicy(policyArea, policyDevice, policy, true);
   this.reset();
   $('#policyArea').focus();
 });
 
 //Adding a policy to an existing ACU
-function addPolicy(policyArea, policyDevice, policy) {
+function addPolicy(policyArea, policyDevice, policy, ndfLoaded) {
   var tempPolicy = new Policy(policyArea, policyDevice, policy);
   var area = findArea(policyArea);
   var device = findACU(policyDevice, area);
