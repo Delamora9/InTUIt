@@ -145,17 +145,7 @@ function ndfQuery() {
 	console.log(networkName + '!');
 	if (networkName == 'new') {
 		networkName = $('#newNetwork').val();
-		$.ajax({
-			url: 'http://146.7.44.180:8080/NDF?' + $.param({"netID": networkName}), //put network ID here
-			method:'GET',
-			success: function(data, status, xhttp){
-				window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
-			},
-			error: function(data, status, xhttp)
-			{
-				alert('There has been an Ajax error');
-			}
-		});
+		window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
 	} else {
 		//get NDF based on networkName
 		$.ajax({

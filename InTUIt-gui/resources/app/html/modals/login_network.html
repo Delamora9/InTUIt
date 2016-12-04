@@ -4,9 +4,9 @@
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<!--<button type="button" class="close" data-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
-				</button>
+				</button>-->
 				<h4 class="modal-title text-center" id="NetworkModalLabel">
 					Choose a Network
 				</h4>
@@ -15,15 +15,15 @@
 				<form id="chooseNetwork">
 					<div class="form-group">
 						<label for="networkName" class="network-label">Available Networks:</label>
-						<select id="networks" form="chooseNetwork" class="form-control" onChange="enableNewNetwork();">
+						<select id="networks" form="chooseNetwork" class="form-control" onChange="enableNewNetwork()">
 							<option value="new">Create New...</option>
 						</select>
 					</div>
 					<label for="newNetwork">Create New Network:</label>
 					<input type="text" class="form-control" id="newNetwork" placeholder="Network1">
 					<hr>
+					<button name="network-redirect" id="networkQuery" class="btn btn-primary btn-default" type="button" onclick="ndfQuery()">View Network</button>
 					<button id="logout-redirect" type="button" class="btn btn-danger" data-dismiss="modal">Log Out</button>
-					<button name="network-redirect" id="networkQuery" class="btn btn-primary" type="button" onclick="ndfQuery();">View Network</button>
 				</form>
 			</div>
 		</div>

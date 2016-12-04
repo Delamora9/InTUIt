@@ -309,9 +309,6 @@ $('#add-device-button').click(function() {
   }
 });
 
-//timeout after 3 sec
-
-
 //enables-disables the new network name field
 function enableNewNetwork()
 {
@@ -378,19 +375,7 @@ function ndfQuery() {
 	//this call is failing
 	if (networkName == 'new') {
 		networkName = $('#newNetwork').val();
-		$.ajax({
-			url: 'http://146.7.44.180:8080/NDF?' + $.param({"netID": networkName}), //put network ID here
-			method:'GET',
-			success: function(data, status, xhttp){
-				console.log('if success');
-				window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
-			},
-			error: function(data, status, xhttp)
-			{
-				console.log('if error');
-				alert('There has been an Ajax error');
-			}
-		});
+		window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
 	} else {
 		//get NDF based on networkName
 		$.ajax({
