@@ -107,6 +107,7 @@
 
 							<div id="info">
 							<p id="selection"></p>
+              <p id="selection" class="selection"></p>
 							</div>
 
 						</div>
@@ -218,11 +219,11 @@
                   </div>
                   <div class="col-lg-3">
                     <label for="deviceActions">Device Actions:</label>
-                    <input type="text" class="form-control" id="deviceActions" aria-describedby="actionsHelp" placeholder="gpio.output(20,1), gpio.output(20,0), ect." required>
+                    <input type="text" class="form-control" id="deviceActions" aria-describedby="actionsHelp" placeholder="gpio.output(20,1), gpio.output(20,0), ect" required>
                   </div>
                   <div class="col-lg-3">
                     <label for="deviceDependencies">Functional Dependencies:</label>
-                    <input type="text" class="form-control" id="deviceDependencies" placeholder="Area:ACU, Area:ACU2, ect." required>
+                    <input type="text" class="form-control" id="deviceDependencies" placeholder="Area:ACU, Area:ACU2, ect" required>
                   </div>
                 </div>
               </div>
@@ -300,16 +301,16 @@
                 <div class="row">
                   <div class="col-lg-6">
                     <label for="policyArea">Area:</label>
-                    <input type="text" class="form-control" id="policyArea" placeholder="AreaName" required>
+                    <select class="form-control" id="policyArea"></select>
                   </div>
                   <div class="col-lg-6">
                     <label for="policyDevice">Device:</label>
-                    <input type="text" class="form-control" id="policyDevice" placeholder="Laser1" required>
+                    <select class="form-control" id="policyDevice"></select>
                   </div>
                 </div>
                 <br>
                 <div class="row">
-                  <div class="col-lg-12">
+                  <div class="col-lg-12" id="policyInfo">
                     <label for="givenStates">Given States:</label>
                     <input type="text" class="form-control" id="givenStates" aria-describedby="actionsHelp" placeholder="on, center" required>
                     <small id="statesHelp" class="form-text text-muted">Separate states with a comma ,</small> <br>
@@ -344,94 +345,30 @@
                 <div class="row">
                   <div class="col-lg-6">
                     <label for="policyArea2">Area:</label>
-                    <input type="text" class="form-control" id="policyArea" placeholder="AreaName" required>
+                    <select class="form-control" id="policyArea2"><option value="None">Select an Area</option></select>
                   </div>
                   <div class="col-lg-6">
                     <label for="policyDevice2">Device:</label>
-                    <input type="text" class="form-control" id="policyDevice" placeholder="Laser1" required>
+                    <select class="form-control" id="policyDevice2"><option value="None">Select a Device</option></select>
                   </div>
                 </div>
                 <br>
                 <div class="row">
                   <div class="col-lg-12">
-                    <label for="givenStates">Given States:</label>
-                    <input type="text" class="form-control" id="givenStates" aria-describedby="actionsHelp" placeholder="on, center" required>
-                    <small id="statesHelp" class="form-text text-muted">Separate states with a comma ,</small> <br>
-                    <label for="associatedCommand">Associated Command:</label>
-                    <input type="text" class="form-control" id="associatedCommand" placeholder="gpio.output(20,0)" required> <br>
+                    <label for="policyToRemove">Policy:</label>
+                    <select class="form-control" id="policyToRemove"><option value="None">Select a Policy</option></select>
                   </div>
                 </div>
               </div>
               <hr>
               <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
-              <input type="submit" class="btn btn-primary" value="Create Policy">
+              <input type="submit" class="btn btn-primary" value="Remove Policy">
             </form>
           </div>
         </div>
       </div>
     </div>
     <!-- End Remove Policy Modal -->
-
-    <!-- Modal for Editing an area -->
-    <div id="edit-area-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-            </button>
-            <h4 class="modal-title text-center" id="myModalLabel2">Edit Area</h4>
-          </div>
-          <div class="modal-body">
-            <form id="editAreaForm">
-              <div class="form-group" id="editAreaName">
-              </div>
-              <br>
-              <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
-              <input type="submit" class="btn btn-primary" value="Submit Changes">
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- End edit area modal -->
-
-    <!-- Modal for Editing a device -->
-    <div id="edit-device-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-      <div class="modal-dialog  modal-lg" role="document">
-        <div class="modal-content bigModal">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-            </button>
-            <h4 class="modal-title text-center" id="myModalLabel">Edit Device</h4>
-          </div>
-          <div class="modal-body">
-            <form id="editDeviceForm">
-              <div class="form-group">
-                <div class="row">
-                  <div class ="col-lg-3" id="editDeviceName">
-                  </div>
-                  <div class="col-lg-3" id="editDeviceStates">
-                  </div>
-                  <div class="col-lg-3" id="editDeviceActions">
-                  </div>
-                  <div class="col-lg-3" id="editDeviceDependencies">
-                  </div>
-                </div>
-              </div>
-              <hr>
-              <br>
-              <hr>
-              <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
-              <input type="submit" class="btn btn-primary" value="Submit Changes">
-            </form>
-          </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- End Edit Device Modal -->
 
 	  <!------------------------ End Modals ----------------------------->
 
