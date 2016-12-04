@@ -10,6 +10,8 @@ window.$ = window.jQuery = require('./js/jquery.min.js');
 //for file system reading/writing
 var fs = require('fs');
 
+var compesIP = 'http://146.7.44.180:8080'; //vGV for the current IP of compes
+
 var userName; //Variable for logged in user. Default is 'generic'
 var networkName; //Variable for current network. Default is 'network'
 var formData;
@@ -40,7 +42,7 @@ $(document).on('click', '#newAccount-redirect', function() {
 	password = $('#newPassword').val();
 	//ajax call to create user/password pair
 	$.ajax({
-		url: 'http://146.7.44.180:8080/signIn?' + $.param({"userID": userName, "mode": "Sup"}),
+		url: compesIP + '/signIn?' + $.param({"userID": userName, "mode": "Sup"}),
 		method:'PUT',
 		data: {userPass: password},
 		success: function(data, status, xhttp){
@@ -57,7 +59,7 @@ $(document).on('click', '#newAccount-redirect', function() {
 //Function to log out user
 $(document).on('click', '#logout-redirect', function(event) {
 	$.ajax({
-		url: 'http://146.7.44.180:8080/signIn?' + $.param({"userID": userName, "mode": "Lout"}),
+		url: compesIP + '/signIn?' + $.param({"userID": userName, "mode": "Lout"}),
 		method:'PUT',
 		data: {userPass: password},
 		success: function(data, xhr){
@@ -78,11 +80,10 @@ function loginQuery() {
 
 	//WORKING AJAX --SIGN in
 	$.ajax({
-		url: 'http://146.7.44.180:8080/signIn?' + $.param({"userID": userName, "mode": "Lin"}),
+		url: compesIP + '/signIn?' + $.param({"userID": userName, "mode": "Lin"}),
 		method: 'PUT',
 		data: {userPass: password},
 		success: function(data, status, xhttp){
-			console.log(data);
 			if (data == "Invalid User-ID: Either not logged in or not registered") {
 				alert("Incorrect username or password");
 				window.location.reload(false);
@@ -104,12 +105,10 @@ function listNetworks() {
 	//get user profile. an associative array that has userID, networkID, etc
 	var networks;
 	$.ajax({
-		url: 'http://146.7.44.180:8080/users',
+		url: compesIP + '/users',
 		method:'GET',
 		success: function(data, xhr){
-			alert(data); //returns a JSON array that has all the user's credentials and network info
 			var userprof = JSON.parse(data);
-			console.log(userprof["Provisioned-Networks"][0]);
 			networks = userprof["Provisioned-Networks"];
 			console.log(networks);
 			selectNetwork(networks);
@@ -134,17 +133,16 @@ function selectNetwork(networks){
 		c.text = name;
 		x.options.add(c, (i-1));
 	}
-	$("#network-modal").modal();
+	$("#network-modal").modal({backdrop: 'static', keyboard: false});
 }
 
 function ndfQuery() {
 	//set networkName
 	var networkName = document.getElementById('networks').value;
-	console.log(networkName + '!');
 	if (networkName == 'new') {
 		networkName = $('#newNetwork').val();
 		$.ajax({
-			url: 'http://146.7.44.180:8080/NDF?' + $.param({"netID": networkName}), //put network ID here
+			url: compesIP + '/NDF?' + $.param({"netID": networkName}), //put network ID here
 			method:'GET',
 			success: function(data, xhr){
 				alert(data);
@@ -159,7 +157,7 @@ function ndfQuery() {
 	} else {
 		//get NDF based on networkName
 		$.ajax({
-			url: 'http://146.7.44.180:8080/NDF?' + $.param({"netID": networkName}), //put network ID here
+			url: compesIP + '/NDF?' + $.param({"netID": networkName}), //put network ID here
 			method:'GET',
 			success: function(data, xhr){
 				var ndfData = data.split('\n');
@@ -168,16 +166,35 @@ function ndfQuery() {
 					stream.write(ndfData[i] + '\n');
 				}
 				stream.end();
-				alert('redirecting to network!');
-				//data is the received NDF. it's a giant string (with newline characters)
-				window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
+				alert('NDF recieved');
+				NSROquery(networkName);
 			},
 			error: function(data, status, xhr)
 			{
 				alert('no redirect no network!');
-				console.log(typeof data);
 				alert((data));
 			}
 		});
 	}
+}
+
+function NSROquery (networkName) {
+	$.ajax({
+  			url: compesIP + '/NSRO?' + $.param({"netID": networkName}), //put network ID here
+  			method:'GET',
+  			success: function(data, status, xhr){
+					var nsroData = data.split('\n');
+					var stream = fs.createWriteStream('./resources/app/ndf/' + userName + "-" + networkName + '.nsro');
+					for (var i = 0; i < nsroData.length; i++) {
+						stream.write(nsroData[i] + '\n');
+					}
+					stream.end();
+					alert('NSRO recieved. Redirecting to network');
+					window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
+  			},
+  			error: function(data, status, xhr)
+  			{
+  				alert(data);
+  			}
+  		});
 }

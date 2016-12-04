@@ -99,7 +99,7 @@ function removeDeviceNode(name, area){
 function removeAreaNode(name){
   var area = findArea(name);
   for (var i = 0; i < area.acuList.length; i++){
-    nodes.remove({id: area.acuList[i].acuName});
+    nodes.remove({id: name + '-' + area.acuList[i].acuName});
     edges.remove({id: name + '-' + area.acuList[i].acuName})
   }
   nodes.remove({id: name});

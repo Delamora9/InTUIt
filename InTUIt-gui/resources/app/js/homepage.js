@@ -65,8 +65,8 @@ $(document).ready(function() {
 });
 //---end document.ready() calls
 
-//********************LOADING NDF **********************//
-//function to read NDF
+//********************BUILDING NETWORK UPON LOGGIN**********************//
+//function to read NDF upon homepage load
 function readNDF() {
     //put NDF data into json files
     var lines;
@@ -120,7 +120,7 @@ function readOPD(data) {
       }
   }
 }
-//********************End Loading NDF *****************//
+//********************End NETWORK BUILD *****************//
 
 
 //********************ADDING AN AREA *****************//
@@ -170,16 +170,24 @@ function addArea(areaName) {
   $('#areaSelect2').empty();
   $('#areaSelect2').append('<option value=\"none\" selected>Select an Area</option>');
   $('#areaSelect3').empty();
+  $('#policyArea').empty();
+  $('#policyArea').append('<option value=\"none\" selected>Select an Area</option>');
+  $('#policyArea2').empty();
+  $('#policyArea2').append('<option value=\"none\" selected>Select an Area</option>');
   for (var i = 0; i < currentNetwork.areaList.length; i++) {
 	  var area = currentNetwork.areaList[i];
 	  $('#areaSelect').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
     $('#areaSelect2').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
     $('#areaSelect3').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
+    $('#policyArea').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
+    $('#policyArea2').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
   }
 
+  console.log("Creating Area File");
   var stream = fs.createWriteStream('./resources/app/json/area_devices/' + areaName + '-devices.json');
   stream.write(JSON.stringify({'deviceData':[]}));
   stream.end();
+  console.log("Area File Created");
 
   var date = new Date();
   $.getJSON("./json/areas.json", function(json) {
@@ -250,11 +258,17 @@ function removeArea(areaName) {
   $('#areaSelect2').empty();
   $('#areaSelect2').append('<option value=\"none\" selected>Select an Area</option>');
   $('#areaSelect3').empty();
+  $('#policyArea').empty();
+  $('#policyArea').append('<option value=\"none\" selected>Select an Area</option>');
+  $('#policyArea2').empty();
+  $('#policyArea2').append('<option value=\"none\" selected>Select an Area</option>');
   for (var i = 0; i < currentNetwork.areaList.length; i++) {
 	  var area = currentNetwork.areaList[i];
 	  $('#areaSelect').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
     $('#areaSelect2').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
     $('#areaSelect3').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
+    $('#policyArea').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
+    $('#policyArea2').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
   }
 
   //add to current changes table
@@ -304,16 +318,17 @@ function addDevice(deviceName, dependencies, states, actions, areaSelect) {
   deviceArea.addACU(tempDevice);
 
   var date = new Date();
-
+console.log(deviceArea.areaName);
   //function call to add the device to the stored json of devices
   $.getJSON("./json/area_devices/" + deviceArea.areaName + "-devices.json", function(json) {
+    console.log("test");
     var deviceJSON = [date.toLocaleString(), deviceName, states, actions, dependencies];
     json.deviceData.push(deviceJSON);
     var stream = fs.createWriteStream('./resources/app/json/area_devices/' + deviceArea.areaName + '-devices.json');
     stream.write(JSON.stringify(json));
     stream.end();
   });
-
+  console.log("After json call");
   //add to current changes table
     if (ndfLoaded) {
         var description = 'Name: ' + deviceName + '<br/>States: ' + states + '<br/>Actions: '
@@ -383,21 +398,56 @@ $('#add-policy-button').click(function() {
     alert("No areas have been created. Please create one");
   }
   else {
+    $('#policyInfo').hide();
+    $('#policyDeviceArea').hide();
     $('#create-policy-modal').modal({
       focus: true
     });
   }
 });
 
+$('#policyArea').change(function(){
+  if($('#policyArea').val() == "none"){
+    $('#policyDeviceArea').hide();
+    $('#policyInfo').hide();
+    $('#policyDevice').empty();
+    $('#policyDevice').append('<option value=\"none\" selected>Select a Device</option>');
+  }
+  else{
+    $('#policyDevice').empty();
+    var area = findArea($('#policyArea').val());
+    if(area.acuList.length == 0){
+      alert("There are not yet devices in this area.");
+    }
+    for(var i = 0; i < area.acuList.length; i++){
+      var device = area.acuList[i];
+      $('#policyDevice').append('<option value="' + device.acuName + '">' + device.acuName +'</option>');
+    }
+    $('#policyDeviceArea').show();
+  }
+});
+
+$('#policyDevice').change(function(){
+  $('#policyInfo').show();
+});
+
 //event fires upon adding a policy
 $('#createPolicyForm').submit(function(e){
   e.preventDefault();
-  var policyArea = $('#policyArea').val();
-  var policyDevice = $('#policyDevice').val();
-  var policy = "Given {" + $('#givenStates').val() + "} associate " + $('#associatedCommand').val();
-  addPolicy(policyArea, policyDevice, policy);
-  this.reset();
-  $('#policyArea').focus();
+  if($('#policyArea').val() == "none"){
+    alert("Please select an area before submitting");
+  }
+  else if($('policyDevice').val() == "none"){
+    alert("Please select a device before submitting");
+  }
+  else{
+    var policyArea = $('#policyArea').val();
+    var policyDevice = $('#policyDevice').val();
+    var policy = "Given {" + $('#givenStates').val().strip(' ') + "} associate " + $('#associatedCommand').val();
+    addPolicy(policyArea, policyDevice, policy);
+    this.reset();
+    $('#policyArea').focus();
+  }
 });
 
 //Adding a policy to an existing ACU
@@ -421,17 +471,77 @@ $('#remove-policy-button').click(function() {
     alert("No areas have been created. Please create one");
   }
   else {
+    $('#policyInfo').hide();
+    $('#policyDeviceArea').hide();
     $('#remove-policy-modal').modal({
       focus: true
     });
   }
 });
 
+$('#policyArea2').change(function(){
+  if($('#policyArea2').val() == "none"){
+    $('#policyDeviceArea').hide();
+    $('#policyInfo').hide();
+    $('#policyDevice2').empty();
+    $('#policyDevice2').append('<option value=\"none\" selected>Select a Device</option>');
+    $('#policyToRemove').empty();
+    $('#policyToRemove').append('<option value=\"none\" selected>Select a Policy</option>');
+  }
+  else{
+    $('#policyDeviceArea').show();
+    $('#policyDevice2').empty();
+    var area = findArea($('#policyArea2').val());
+    for(var i = 0; i < area.acuList.length; i++){
+      var device = area.acuList[i];
+      $('#policyDevice2').append('<option value="' + device.acuName + '">' + device.acuName +'</option>');
+    }
+  }
+});
+
+$('#policyDevice2').change(function(){
+  $('#policyToRemove').empty();
+  var acu = findACU($('#policyDevice2').val(), $('#policyArea2').val());
+  if(acu.policyList.length == 0){
+    alert("The selected device has no policies.")
+  }
+  for(var i = 0; i < acu.policyList.length; i++){
+    var policy = acu.policyList[i];
+    $('#policyDevice').append('<option value="' + policy.policy + '">' + policy.policy +'</option>');
+  }
+});
+
 //event fires upon removing a policy
 $('#removePolicyForm').submit(function(e){
   e.preventDefault();
-
+  if($('#policyArea2').val() == "none"){
+    alert("Please select an area.");
+  }
+  else if($('#policyDevice2').val() == "none"){
+    alert("Please select a device.");
+  }
+  else if($('#policyToRemove').val() == "none"){
+    alert("Please select a policy.");
+  }
+  else{
+    removePolicy($('#policyArea2').val(), $('#policyDevice2').val(), $('#policyToRemove').val());
+  }
 });
+
+function removePolicy(area, device, policy){
+  var removalArea = findArea(area);
+  var acu = findACU(device, removalArea);
+  for(var i = 0; i < acu.policyList.length; i++) {
+      if(acu.policyList[i].policy == policy){
+          acu.policyList.splice(i, 1);
+      }
+  }
+  if (ndfLoaded) {
+      var description = 'Policy: ' + policy + '<br/>Device: ' + device + '<br/>Area: ' + area;
+      addChange("Policy Removed", description);
+  };
+}
+
 
 //****************END NETWORK EDITING MODALS BEHAVIOR*****************//
 
@@ -504,6 +614,7 @@ function sendNDF(){
 window.onunload = function(){
   clearAreas();
   clearChangesTable();
+  deleteAreaFiles("./resources/app/ndf");
   deleteAreaFiles("./resources/app/json/area_devices");
 }
 
