@@ -14,6 +14,7 @@ var qs = require('querystring');
 var username; //Variable for logged in user.
 var networkName; //Variable for current network.
 var ndfFilePath;
+var nsroFilePath;
 
 var currentNetwork; //Holds the entire network structure
 
@@ -29,7 +30,8 @@ $(document).ready(function() {
   var queryString = window.location.search
   username = getQueryVariable('userName', queryString);
   networkName = getQueryVariable('networkName', queryString);
-  ndfFilePath = "./NDF/" + username + '-' + networkName + '.ndf'; //file name to write NDF to
+  ndfFilePath = './NDF/' + username + '-' + networkName + '.ndf'; //file name to write NDF to
+  nsroFilePath = './NSRO/' + username + '-' + networkName + '.nsro';
   currentNetwork = new Network(networkName, username);
 
   //Populate the Username and Network Fields bassed on Login
@@ -59,6 +61,9 @@ $(document).ready(function() {
 
   //read the user's ndf file
   readNDF();
+
+  //test call of the readNSRO
+  setTimeout(readNSRO, 3000);
 
 });
 //---end document.ready() calls
@@ -136,6 +141,39 @@ function readOPD() {
     });
 }
 //********************End Loading NDF *****************//
+
+//********************Reading NSRO ********************//
+//function to read an NSRO
+function readNSRO() {
+    $.getJSON(nsroFilePath, function(json) {
+        for (var a in json) {
+            var area = json[a];
+            var areaName = a.toString();
+            for (var d in area) {
+                var device = area[d];
+                var deviceName = d.toString();
+                var lastAction = JSON.stringify(device["Last-action"]);
+                lastAction = lastAction.replace('\"', '')
+                lastAction = lastAction.replace('\"', '')
+                var currentState = JSON.stringify(device["State"]);
+                currentState = currentState.replace('\"', '')
+                currentState = currentState.replace('\"', '')
+                updateACU(areaName, deviceName, lastAction, currentState);
+            }
+        }
+    });
+}
+
+//update ACU's lastAction and currentState
+function updateACU(areaName, deviceName, lastAction, currentState) {
+    var area = findArea(areaName);
+    var device = findACU(deviceName, area);
+    device.lastAction = lastAction;
+    device.currentState = currentState;
+    alert("Device: " + deviceName + "\nLast Action: " + device.lastAction + "\nCurrent State: " + device.currentState);
+}
+
+//********************End Reading NSRO ****************//
 
 //********************ADDING AN AREA *****************//
 //Prefires for when user clicks Add Area button
