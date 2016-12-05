@@ -18,30 +18,6 @@
 	<nav class="navbar navbar-dark bg-inverse">
          <ul class="nav navbar-nav">
             <li class="navbar-brand">InTUIt IoT Network Creator </li>
-			<div class="dropdown-container">
-            <div class= "nav-stats">
-				<div class="panel-group">
-					<div class="panel panel-default">
-						<div class="panel-heading">
-							<h4 class="panel-title">
-								<a id="network-name" class="collapse-button" data-toggle="collapse" href="#collapsemenu"></a>
-							</h4>
-						</div>
-						<div id="collapsemenu" class="panel-collapse collapse">
-							<div class="panel-body">
-								<ul class="nav navbar-nav">
-									<li id="user-name"></li>
-									<li><a class="logout-button" href="#network-modal" onClick="listNetworks();">Change Network</a></li>
-									<li><a class="logout-button" data-toggle="modal" href="#delete-modal">Delete User/Network</a></li>
-									<li><a class="logout-button" data-toggle="modal" href="#logout-modal">Log Out</a></li>
-								</ul>
-							</div>
-						</div>
-					</div>
-				</div>
-			   </div></ul>
-				
-			</div>
 		</ul>
       </nav>
 </header>
@@ -61,6 +37,29 @@
 						<button type="button" id="remove-device-button" class="btn btn-primary btn-lg btn-block">Remove Device</button>
 						<button type="button" id="add-policy-button" class="btn btn-primary btn-lg btn-block" data-toggle="modal" data-target="#create-policy-modal">Create Policy</button>
 						<button type="button" id="remove-policy-button" class="btn btn-primary btn-lg btn-block">Remove Policy</button>
+						</br>
+			<div class="dropdown-container">
+			<div class="nav-stats">
+				<div class="panel-group">
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							<h4 class="panel-title">
+								<a data-toggle="collapse" class="collapse-button" href="#collapsemenu"><img src="./images/settings-icon.png" class="icon" alt="Responsive image">Settings</a>
+							</h4>
+						</div>
+						<div id="collapsemenu" class="panel-collapse collapse">
+							<div class="panel-body">
+								<ul class="nav navbar-nav">
+									<li><a class="logout-button" href="#network-modal" onClick="listNetworks();">Change Network</a></li>
+									<li><a class="logout-button" data-toggle="modal" href="#delete-modal">Delete User/Network</a></li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			</div>
+						</br>
 						</br>
 						<button type="button" id="submitNDF" class="btn btn-default btn-lg btn-block">SUBMIT</button>
 						
@@ -97,6 +96,7 @@
 	  <div id="logout-modal-load"></div>
 	  <div id="network-modal-load"></div>
 	  <div id="delete-modal-load"></div>
+	  <!--<div id="settings-modal-load"></div>-->
 
       <!-- Script imports -->
       <script src="./js/homepage.js"></script>
