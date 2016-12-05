@@ -110,12 +110,7 @@ function listNetworks() {
 		success: function(data, xhr){
 			var userprof = JSON.parse(data);
 			networks = userprof["Provisioned-Networks"];
-			console.log(networks);
 			selectNetwork(networks);
-			/*for (var i = 0; i < userprof["Provisioned-Networks"].length; i++)
-			{
-				networks[i] = userprof["Provisioned-Networks"][i];
-			}*/
 		},
 		error: function(xhr, data, errorThrown)
 		{
@@ -125,6 +120,8 @@ function listNetworks() {
 }
 
 function selectNetwork(networks){
+	$('#networks').empty();
+	$('#networks').append('<option value="new">Create New...</option>');
 	for (i = 0; i < networks.length; i++)
 	{
 		var name = networks[i];
@@ -133,6 +130,7 @@ function selectNetwork(networks){
 		c.text = name;
 		x.options.add(c, (i-1));
 	}
+	$('#networks>option[value=new]').insertBefore($('select[id=networks]').find('option:eq(0)'))
 	$("#network-modal").modal({backdrop: 'static', keyboard: false});
 }
 
@@ -141,19 +139,8 @@ function ndfQuery() {
 	var networkName = document.getElementById('networks').value;
 	if (networkName == 'new') {
 		networkName = $('#newNetwork').val();
-		$.ajax({
-			url: compesIP + '/NDF?' + $.param({"netID": networkName}), //put network ID here
-			method:'GET',
-			success: function(data, xhr){
-				alert(data);
-				alert('create new network!');
-				//window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
-			},
-			error: function(xhr, data, errorThrown)
-			{
-				alert('no new network created!');
-			}
-		});
+		alert('create new network!');
+		window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName + '&newUser=true';
 	} else {
 		//get NDF based on networkName
 		$.ajax({
@@ -166,8 +153,8 @@ function ndfQuery() {
 					stream.write(ndfData[i] + '\n');
 				}
 				stream.end();
-				alert('NDF recieved');
-				NSROquery(networkName);
+				alert('NDF recieved. Redirecting to network!');
+									window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName + '&newUser=false';
 			},
 			error: function(data, status, xhr)
 			{
@@ -176,25 +163,4 @@ function ndfQuery() {
 			}
 		});
 	}
-}
-
-function NSROquery (networkName) {
-	$.ajax({
-  			url: compesIP + '/NSRO?' + $.param({"netID": networkName}), //put network ID here
-  			method:'GET',
-  			success: function(data, status, xhr){
-					var nsroData = data.split('\n');
-					var stream = fs.createWriteStream('./resources/app/ndf/' + userName + "-" + networkName + '.nsro');
-					for (var i = 0; i < nsroData.length; i++) {
-						stream.write(nsroData[i] + '\n');
-					}
-					stream.end();
-					alert('NSRO recieved. Redirecting to network');
-					window.location='./homepage.html?userName=' + userName +'&networkName=' + networkName
-  			},
-  			error: function(data, status, xhr)
-  			{
-  				alert(data);
-  			}
-  		});
 }

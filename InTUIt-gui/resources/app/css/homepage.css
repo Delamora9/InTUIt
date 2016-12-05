@@ -99,3 +99,39 @@ while being responsive to its conainer */
 .white {
 	color: white;
 }
+
+.collapse-button {
+	height: 100%;
+	font-size: 18pt;
+	color: white;
+	margin-top: 100px;
+}
+
+.dropdown-container {
+	height: 100%;
+}
+
+a.logout-button:active,
+a.logout-button:visited,
+a.logout-button:link,
+a.collapse-button:active,
+a.collapse-button:visited,
+a.collapse-button:link {
+	color: white;
+	text-decoration: none;
+}
+
+a.logout-button:hover,
+.logout-button:hover,
+a.collapse-button:hover {
+	color: gray;
+	text-decoration: underline;
+}
+
+#navbar-brand {
+  font-size: 20pt;
+}
+
+h3 {
+	color: gray;
+}

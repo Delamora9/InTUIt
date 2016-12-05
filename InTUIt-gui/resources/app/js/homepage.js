@@ -11,18 +11,23 @@ var fs = require('fs');
 //for query string parsing
 var qs = require('querystring');
 
+var compesIP = 'http://146.7.44.180:8080';
+
 var username = 'generic'; //Variable for logged in user. Default is 'generic'
+var password;
 var networkName = 'network'; //Variable for current network. Default is 'network'
 var ndfFilename = username + networkName + '.ndf';
 var ndfFilePath;
 
 var currentNetwork; //Holds the entire network structure
 
-var ndfLoaded = false; //Variable to hold the load status of NDF
+var NSROtimer;
 
 var deviceTable;
 var areaTable;
 var changesTable;
+
+var timerCount = 0;
 
 
 //script that executes once homepage is fully loaded
@@ -30,9 +35,34 @@ $(document).ready(function() {
   var queryString = window.location.search
   username = getQueryVariable('userName', queryString);
   networkName = getQueryVariable('networkName', queryString);
+  var newUser = getQueryVariable('newUser', queryString);
   ndfFilename = username + '-' + networkName + '.ndf'; //file name to write NDF to
   ndfFilePath = "./ndf/" + ndfFilename;
   currentNetwork = new Network(networkName, username);
+
+  //get password and store value
+	$.ajax({
+		url: compesIP + '/users',
+		method:'GET',
+		success: function(data, status, xhttp){
+			//alert(data); //returns a JSON array that has all the user's credentials and network info
+			var userprof = JSON.parse(data);
+			password = (userprof["Password"]);
+		},
+		error: function(data, status, xhttp)
+		{
+			alert(data); //all these error throws will just be debugging. the user should never see them
+		}
+	});
+
+  //Start timeout interval
+  var timeOut = setInterval(timer, 60000);
+  $(this).mousemove(function(e) {
+	  timerCount = 0;
+  });
+  $(this).keypress(function(e) {
+	  timerCount = 0;
+  });
 
   //Populate the Username and Network Fields bassed on Login
   $('#user-name').html('User: ' + username);
@@ -59,11 +89,41 @@ $(document).ready(function() {
     }
   });
 
-  //read the user's ndf file
-  readNDF();
+  if (newUser == 'false'){
+    //read the user's ndf file
+    readNDF();
+    setTimeout(function() {NSROtimer = setInterval(refreshNSRO, 1000);}, 3000);
+  }
 
 });
 //---end document.ready() calls
+
+//Auto timeout function
+function timer() {
+	timerCount = timerCount + 1;
+	if (timerCount > 14) {
+		alert("You have been logged out due to inactivity");
+		logout();
+	}
+}
+
+
+//Function to recieve NSRO for a network from CoMPES
+function refreshNSRO() {
+  console.log('NSRO refresh');
+	$.ajax({
+  			url: compesIP + '/NSRO?' + $.param({"netID": networkName}), //put network ID here
+  			method:'GET',
+  			success: function(data, status, xhr){
+					var nsroData = data;
+          readNSRO(data);
+  			},
+  			error: function(data, status, xhr)
+  			{
+  				alert(data);
+  			}
+  		});
+}
 
 //********************BUILDING NETWORK UPON LOGGIN**********************//
 //function to read NDF upon homepage load
@@ -86,7 +146,7 @@ function readNSDO(data) {
   for (var a in nsdo) {
       var area = nsdo[a];
       var areaName = a.toString();
-      addArea(areaName);
+      addArea(areaName, false);
       for (var d in area) {
           var device = area[d];
           var deviceName = d.toString();
@@ -99,7 +159,7 @@ function readNSDO(data) {
           var actions = JSON.stringify(device["Actions"]);
           actions = actions.replace('[','');
           actions = actions.replace(']','');
-          addDevice(deviceName, dependencies, states, actions, areaName)
+          addDevice(deviceName, dependencies, states, actions, areaName, false)
       }
   }
 }
@@ -115,12 +175,44 @@ function readOPD(data) {
           var deviceName = d.toString();
           for (var p in device) {
               var policy = JSON.stringify(device[p]);
-              addPolicy(areaName, deviceName, policy);
+              addPolicy(areaName, deviceName, policy, false);
           }
       }
   }
 }
 //********************End NETWORK BUILD *****************//
+
+//********************Reading NSRO ********************//
+//function to read an NSRO
+function readNSRO(data) {
+  nsro = JSON.parse(data);
+  for (var a in nsro) {
+      var area = nsro[a];
+      var areaName = a.toString();
+      for (var d in area) {
+          var device = area[d];
+          var deviceName = d.toString();
+          var lastAction = JSON.stringify(device["Last-action"]);
+          lastAction = lastAction.replace('\"', '')
+          lastAction = lastAction.replace('\"', '')
+          var currentState = JSON.stringify(device["State"]);
+          currentState = currentState.replace('\"', '')
+          currentState = currentState.replace('\"', '')
+          updateACU(areaName, deviceName, lastAction, currentState);
+      }
+  }
+}
+
+//update ACU's lastAction and currentState
+function updateACU(areaName, deviceName, lastAction, currentState) {
+    var area = findArea(areaName);
+    var device = findACU(deviceName, area);
+    device.lastAction = lastAction;
+    device.currentState = currentState;
+    //alert("Device: " + deviceName + "\nLast Action: " + device.lastAction + "\nCurrent State: " + device.currentState);
+}
+
+//********************End Reading NSRO ****************//
 
 
 //********************ADDING AN AREA *****************//
@@ -156,13 +248,13 @@ $('#addAreaForm').submit(function(e){
   setTimeout(function(){ //allow addArea to execute before refresh
     areaTable.ajax.reload();
   }, 100);
-  addArea($('#areaName').val());
+  addArea($('#areaName').val(), true);
   $('#addAreaForm')[0].reset(); //reset form fields
   $('#areaName').focus();
 });
 
 //Adding an area into the network
-function addArea(areaName) {
+function addArea(areaName, ndfLoaded) {
   currentNetwork.areaList.push(new Area(areaName));
   //update the slectable list of areas in the add acu form
   $('#areaSelect').empty();
@@ -183,11 +275,9 @@ function addArea(areaName) {
     $('#policyArea2').append('<option value="' + area.areaName + '">' + area.areaName +'</option>');
   }
 
-  console.log("Creating Area File");
   var stream = fs.createWriteStream('./resources/app/json/area_devices/' + areaName + '-devices.json');
   stream.write(JSON.stringify({'deviceData':[]}));
   stream.end();
-  console.log("Area File Created");
 
   var date = new Date();
   $.getJSON("./json/areas.json", function(json) {
@@ -282,7 +372,6 @@ function removeArea(areaName) {
 //Create Device Datatable when button to summon modal is clicked
 $('#add-device-button').click(function() {
   if (currentNetwork.areaList.length == 0) {
-    //e.preventDefault();
     alert("No areas have been created. Please create one");
   }
   else {
@@ -298,21 +387,64 @@ $('#addDeviceForm').submit(function(e){
   e.preventDefault(); //prevent form from redirect
   setTimeout(function(){ //allow addDevice to execute before refresh
     deviceTable.ajax.reload();
-    $('#addDeviceForm')[0].reset(); //reset form fields
+    $('#deviceName,#deviceDependencies,#deviceActions,#deviceStates').val(function(){
+      return this.defaultValue;
+    });
   }, 100);
 
   var deviceName = $('#deviceName').val();
   var dependencies = $('#deviceDependencies').val();
+  var dependencyList = dependencies.split(",");
+  var dependenciesReformat = "";
+
+  for (var i = 0; i < dependencyList.length; i++) {
+  	if (dependencyList[i] != ""){
+  	  var dependency = dependencyList[i];
+  	  dependency = dependency.trim();
+  		dependency = "\"" + dependency + "\"";
+  	  dependenciesReformat += dependency;
+  		if(i + 1 != dependencyList.length) { dependenciesReformat += ","};
+    }
+  }
+
+  dependencies = dependenciesReformat;
+
   var states = $('#deviceStates').val();
+  var stateList = states.split(",");
+  var statesReformat = "";
+  for (var i = 0; i < stateList.length; i++) {
+      var state = stateList[i];
+      state = state.trim();
+      state = "\"" + state + "\"";
+      statesReformat += state;
+      if(i + 1 != stateList.length) { statesReformat += ","};
+  }
+
+  states = statesReformat;
+
   var actions = $('#deviceActions').val();
+  var actionList = actions.split(",");
+  var actionsReformat = "";
+
+  for (var i = 0; i < actionList.length; i++) {
+	  if (actionList[i] != ""){
+		  var action = actionList[i];
+		  action = action.trim();
+		  action = "\"" + action + "\"";
+		  actionsReformat += action;
+		  if(i + 1 != actionList.length) { actionsReformat += ","};
+	  }
+  }
+
+  actions = actionsReformat;
   var areaSelect = $('#areaSelect').val();
 
-  addDevice(deviceName, dependencies, states, actions, areaSelect);
-$('#deviceName').focus();
+  addDevice(deviceName, dependencies, states, actions, areaSelect, true);
+  $('#deviceName').focus();
 });
 
 //Adding a device into the network
-function addDevice(deviceName, dependencies, states, actions, areaSelect) {
+function addDevice(deviceName, dependencies, states, actions, areaSelect, ndfLoaded) {
   var tempDevice = new ACU(deviceName, dependencies, states, actions, areaSelect);
   var deviceArea = findArea(areaSelect);
   deviceArea.addACU(tempDevice);
@@ -443,15 +575,17 @@ $('#createPolicyForm').submit(function(e){
   else{
     var policyArea = $('#policyArea').val();
     var policyDevice = $('#policyDevice').val();
-    var policy = "Given {" + $('#givenStates').val().strip(' ') + "} associate " + $('#associatedCommand').val();
-    addPolicy(policyArea, policyDevice, policy);
-    this.reset();
+    var policy = "\"Given {" + $('#givenStates').val().replace(', ', ',') + "} associate " + $('#associatedCommand').val() +"\"";
+    addPolicy(policyArea, policyDevice, policy, true);
+    $('#givenStates,#associateCommand').val(function(){
+      return this.defaultValue;
+    });
     $('#policyArea').focus();
   }
 });
 
 //Adding a policy to an existing ACU
-function addPolicy(policyArea, policyDevice, policy) {
+function addPolicy(policyArea, policyDevice, policy, ndfLoaded) {
   var tempPolicy = new Policy(policyArea, policyDevice, policy);
   var area = findArea(policyArea);
   var device = findACU(policyDevice, area);
@@ -471,8 +605,8 @@ $('#remove-policy-button').click(function() {
     alert("No areas have been created. Please create one");
   }
   else {
-    $('#policyInfo').hide();
-    $('#policyDeviceArea').hide();
+    $('#policyInfo2').hide();
+    $('#policyDeviceArea2').hide();
     $('#remove-policy-modal').modal({
       focus: true
     });
@@ -481,15 +615,15 @@ $('#remove-policy-button').click(function() {
 
 $('#policyArea2').change(function(){
   if($('#policyArea2').val() == "none"){
-    $('#policyDeviceArea').hide();
-    $('#policyInfo').hide();
+    $('#policyDeviceArea2').hide();
+    $('#policyInfo2').hide();
     $('#policyDevice2').empty();
     $('#policyDevice2').append('<option value=\"none\" selected>Select a Device</option>');
     $('#policyToRemove').empty();
     $('#policyToRemove').append('<option value=\"none\" selected>Select a Policy</option>');
   }
   else{
-    $('#policyDeviceArea').show();
+    $('#policyDeviceArea2').show();
     $('#policyDevice2').empty();
     var area = findArea($('#policyArea2').val());
     for(var i = 0; i < area.acuList.length; i++){
@@ -500,14 +634,16 @@ $('#policyArea2').change(function(){
 });
 
 $('#policyDevice2').change(function(){
+  $('#policyInfo2').show();
   $('#policyToRemove').empty();
-  var acu = findACU($('#policyDevice2').val(), $('#policyArea2').val());
+  var tempArea = findArea($('#policyArea2').val());
+  var acu = findACU($('#policyDevice2').val(), tempArea);
   if(acu.policyList.length == 0){
     alert("The selected device has no policies.")
   }
   for(var i = 0; i < acu.policyList.length; i++){
     var policy = acu.policyList[i];
-    $('#policyDevice').append('<option value="' + policy.policy + '">' + policy.policy +'</option>');
+    $('#policyToRemove').append('<option value=' + policy.policy + '>' + policy.policy + '</option>');
   }
 });
 
@@ -531,15 +667,18 @@ $('#removePolicyForm').submit(function(e){
 function removePolicy(area, device, policy){
   var removalArea = findArea(area);
   var acu = findACU(device, removalArea);
+  policy = "\"" + policy + "\"";
   for(var i = 0; i < acu.policyList.length; i++) {
+      alert(acu.policyList[i].policy);
       if(acu.policyList[i].policy == policy){
+          alert("gotcha");
           acu.policyList.splice(i, 1);
       }
   }
-  if (ndfLoaded) {
-      var description = 'Policy: ' + policy + '<br/>Device: ' + device + '<br/>Area: ' + area;
-      addChange("Policy Removed", description);
-  };
+
+  var description = 'Policy: ' + policy + '<br/>Device: ' + device + '<br/>Area: ' + area;
+  addChange("Policy Removed", description);
+
 }
 
 
@@ -593,11 +732,12 @@ function sendNDF(){
   	//posts NDF to compes. tie it to the "submit" button
   	function postNDF() {
   		$.ajax({
-  			url: 'http://146.7.44.180:8080/NDF?' + $.param({"netID": networkName}), //put network ID here
+  			url: compesIP + '/NDF?' + $.param({"netID": networkName}), //put network ID here
   			method:'POST',
   			data: {NDF: ndfVar}, //this will be the actual NDF file (all the 3 arrays)
   			success: function(data, status, xhr){
   				alert(data);
+          setTimeout(function() {NSROtimer = setInterval(refreshNSRO, 1000);}, 3000);
   			},
   			error: function(data, status, xhr)
   			{
@@ -733,40 +873,172 @@ function getQueryVariable(variable, queryString) {
   console.log('Query variable %s not found', variable);
 }
 
+//**************SETTINGS MENU FUNCTION CALLS*****************************///
+//enables-disables the new network name field
+function enableNewNetwork()
+{
+	if (document.getElementById('networks').value === 'new') {
+		document.getElementById('newNetwork').disabled=false;
+	} else {
+		document.getElementById('newNetwork').disabled=true;
+	}
+}
+
+//Function to call info for dropdown list
+function listNetworks() {
+	//get user profile. an associative array that has userID, networkID, etc
+	var networks;
+	$.ajax({
+		url: compesIP + '/users',
+		method:'GET',
+		success: function(data, xhr){
+			var userprof = JSON.parse(data);
+			networks = userprof["Provisioned-Networks"];
+			selectNetwork(networks);
+		},
+		error: function(xhr, data, errorThrown)
+		{
+			alert(data); //all these error throws will just be debugging. the user should never see them
+		}
+	});
+}
+
+//function to populate dropdown list
+function selectNetwork(networks){
+	$('#networks').empty();
+	$('#networks').append('<option value="new">Create New...</option>');
+	for (i = 0; i < networks.length; i++)
+	{
+		var name = networks[i];
+		var x = document.getElementById("networks");
+		var c = document.createElement("option");
+		c.text = name;
+		x.options.add(c, (i-1));
+	}
+	$('#networks>option[value=new]').insertBefore($('select[id=networks]').find('option:eq(0)'))
+	$("#network-modal").modal();
+}
+
+function ndfQuery() {
+	//set networkName
+	var changeNetwork = document.getElementById('networks').value;
+	//this call is failing
+	if (changeNetwork == 'new') {
+		networkName = $('#newNetwork').val();
+		window.location='./homepage.html?userName=' + username +'&networkName=' + networkName + '&newUser=true';
+	}
+  else if(changeNetwork == networkName){
+    alert("You are already on that network!");
+  }
+  else {
+		//get NDF based on networkName
+		$.ajax({
+			url: compesIP + '/NDF?' + $.param({"netID": changeNetwork}), //put network ID here
+			method:'GET',
+			success: function(data, status, xhttp){
+				var ndfData = data.split('\n');
+				var stream = fs.createWriteStream('./resources/app/ndf/' + username + "-" + changeNetwork);
+				for (var i = 0; i < ndfData.length; i++) {
+					stream.write(ndfData[i] + '\n');
+				}
+				stream.end();
+        alert('NDF recieved');
+				NSROquery(changeNetwork);
+			},
+			error: function(data, status, xhttp)
+			{
+				alert((data));
+			}
+		});
+	}
+}
+
+//Function to recieve NSRO for a network from CoMPES
+function NSROquery (networkName) {
+	$.ajax({
+  			url: compesIP + '/NSRO?' + $.param({"netID": networkName}), //put network ID here
+  			method:'GET',
+  			success: function(data, status, xhr){
+					var nsroData = data.split('\n');
+					var stream = fs.createWriteStream('./resources/app/ndf/' + username + "-" + networkName + '.nsro');
+					for (var i = 0; i < nsroData.length; i++) {
+						stream.write(nsroData[i] + '\n');
+					}
+					stream.end();
+					alert('NSRO recieved. Redirecting to network');
+					window.location='./homepage.html?userName=' + username +'&networkName=' + networkName + '&newUser=false';
+  			},
+  			error: function(data, status, xhr)
+  			{
+  				alert(data);
+  			}
+  		});
+}
+
+//FUNCTION TO DELETE USER/NETWORK
+function deleteSomething() {
+	//Delete current network
+	if ($("input[name=deleteObj]:checked").val() == 'network')
+	{
+		//delete NDF. reminder that the user is assumed to be logged in
+		$.ajax({
+			url: compesIP + '/NDF?' + $.param({"netID": "currentSelectedNetworkName"}), //put network ID here
+			method:'DELETE',
+			success: function(data, status, xhttp){
+				alert(data); //tells the user that the NDF was de-provisioned
+				window.location.href="./loginIndex.html";
+			},
+			error: function(xhr, data, errorThrown)
+			{
+				alert(data);
+			}
+		});
+	}
+	//AJAX to delete current user
+	else if ($("input[name=deleteObj]:checked").val() == 'user') {
+		console.log('delete a user!');
+		$.ajax({
+			url: compesIP + '/signIn',
+			method:'DELETE',
+			success: function(data, status, xhttp){
+				alert(data); //the user was deleted
+				window.location.href="./loginIndex.html";
+			},
+			error: function(data, status, xhttp)
+			{
+				alert(data);
+			}
+		});
+	} else {
+		console.log('dont touch me!');
+		//error
+	}
+};
+//*************************END SETTINGS MENU CALLS***************************//
+
+
 //load user profile ajax call
 $('#logout-button').click(function(event) {
   if (confirm('Are you sure you want to logout?')) {
     if (confirm('Warning: any unsaved changes will be lost')){
-    	$.ajax({
-    		url: 'http://146.7.44.180:8080/users',
-    		method:'GET',
-    		success: function(data, xhr){
-    			var userprof = JSON.parse(data);
-    			var pass = (userprof["Password"]);
-    			logout(pass); //Calls loggout function with pass retrieved from ComPES
-    		},
-    		error: function(data, status, xhttp)
-    		{
-    			alert(data); //all these error throws will just be debugging. the user should never see them
-    		}
-    	});
+      logout();
     }
   }
 });
 
-function logout(password) {
-	$.ajax({
-		url: 'http://146.7.44.180:8080/signIn?' + $.param({"userID": username, "mode": "Lout"}),
-		method:'PUT',
-		data: {userPass: password},
-		success: function(data, status, xhttp){
-			alert(data); //tells you that you logged out
-			window.location.href="./loginIndex.html";
-		},
-		error: function(data, status, xhttp)
-		{
-			alert(data);
-		}
-	});
-
+function logout() {
+  clearInterval(NSROtimer);
+  $.ajax({
+    url: compesIP + '/signIn?' + $.param({"userID": username, "mode": "Lout"}),
+    method:'PUT',
+    data: {userPass: password},
+    success: function(data, status, xhttp){
+      alert(data); //tells you that you logged out
+      window.location.href="./loginIndex.html";
+    },
+    error: function(data, status, xhttp)
+    {
+      alert(data);
+    }
+  });
 }

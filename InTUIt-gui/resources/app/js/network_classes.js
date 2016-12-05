@@ -129,6 +129,9 @@ var ACU = function (acuName, dependencies, states, actions, area) {
     this.actions = actions;
     this.area = area;
     this.policyList = new Array(); //Array of all Policies associated to ACU
+    //store information read off of the NSRO
+    this.lastAction;
+    this.currentState;
 
   // METHODS
     this.addPolicy = function addPolicy(Policy) {

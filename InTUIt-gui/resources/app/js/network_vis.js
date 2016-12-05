@@ -50,24 +50,18 @@ var network = new vis.Network(container, data, options);
 //function that reacts to selecting a node
 network.on('select', function(params) {
       $('#selection').empty();
-      $('#editAreaName').empty();
-      $('#editDeviceName').empty();
-      $('#editDeviceStates').empty();
-      $('#editDeviceActions').empty();
-      $('#editDeviceDependencies').empty();
       if(params.nodes.length > 0){
         if(findArea(nodes.get(params.nodes)[0].label) != null){
           currentNode = findArea(nodes.get(params.nodes)[0].label);
-          $('#selection').append("Area: " + currentNode.areaName + "<button type=\"button\" id=\"edit-area-button\" class=\"btn btn-primary btn-sm btn-block\"data-toggle=\"modal\" data-target=\"#edit-area-modal\">Edit Area</button>");
-          $('#editAreaName').append("<label for=\"areaNameOptions\">AreaName:</label><select class=\"form-control\" id=\"areaNameOptions\"><option value=\"" + currentNode.areaName + "\"selected>" + currentNode.areaName + "</option><option>Other</option><br><div id=\"newAreaName\"></div>");
+          $('#selection').append("Area Name: " + currentNode.areaName + "<br>Number of ACUS: " + currentNode.acuList.length);
         }
         else {
           currentNode = findACU(nodes.get(params.nodes)[0].label, findArea(getNodeArea(nodes.get(params.edges)[0].id)));
-          $('#selection').append("Area: " + currentNode.area + "\t ACU: " + currentNode.acuName + "<button type=\"button\" id=\"edit-device-button\" class=\"btn btn-primary btn-sm btn-block\"data-toggle=\"modal\" data-target=\"#edit-device-modal\">Edit Device</button>");
-          $('#editDeviceName').append("<label for=\"deviceNameOptions\">Device Name:</label><select class=\"form-control\" id=\"deviceNameOptions\"><option value=\"" + currentNode.acuName + "\" selected>" + currentNode.acuName + "</option><option value=\"Other\">Other</option></select><br><div id=\"newName\"></div>");
-          $('#editDeviceStates').append("<label for=\"deviceStatesOptions\">Possible Device States:</label><select class=\"form-control\" id=\"deviceStatesOptions\"><option value = \"" + currentNode.states + "\" selected>" + currentNode.states + "</option><option value=\"Other\">Other</option></select><br><div id=\"newStates\"></div>");
-          $('#editDeviceActions').append("<label for=\"deviceActionsOptions\">Device Actions:</label><select class=\"form-control\" id=\"deviceActionsOptions\"><option value = \"" + currentNode.actions + "\" selected>" + currentNode.actions + "</option><option value=\"Other\">Other</option></select><br><div id=\"newActions\"></div>");
-          $('#editDeviceDependencies').append("<label for=\"deviceDependenciesOptions\">Functional Dependencies:</label><select class=\"form-control\" id=\"deviceDependenciesOptions\"><option value = \"" + currentNode.dependencies + "\" selected>" + currentNode.dependencies + "</option><option value=\"Other\">Other</option></select><br><div id=\"newDependencies\"></div>");
+          var info = "Area: " + currentNode.area + "<br>ACU: " + currentNode.acuName + "<br>Current State: " + currentNode.currentState + "<br>Last Action: " + currentNode.lastAction + "<br>Policies:";
+          for (var p in currentNode.policyList) {
+            info = info + "<br>" + currentNode.policyList[p].policy;
+          }
+          $('#selection').append(info);
         }
       }
       else if(params.edges.length > 0) {
