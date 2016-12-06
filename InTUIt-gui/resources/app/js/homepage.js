@@ -14,6 +14,7 @@ var qs = require('querystring');
 var compesIP = 'http://146.7.44.180:8080';
 
 var username = 'generic'; //Variable for logged in user. Default is 'generic'
+var newUser; //Boolean for if user is new or not
 var password;
 var networkName = 'network'; //Variable for current network. Default is 'network'
 var ndfFilename = username + networkName + '.ndf';
@@ -35,7 +36,7 @@ $(document).ready(function() {
   var queryString = window.location.search
   username = getQueryVariable('userName', queryString);
   networkName = getQueryVariable('networkName', queryString);
-  var newUser = getQueryVariable('newUser', queryString);
+  newUser = getQueryVariable('newUser', queryString);
   ndfFilename = username + '-' + networkName + '.ndf'; //file name to write NDF to
   ndfFilePath = "./ndf/" + ndfFilename;
   currentNetwork = new Network(networkName, username);
@@ -735,20 +736,6 @@ function removePolicy(area, device, policy){
 
 //****************END NETWORK EDITING MODALS BEHAVIOR*****************//
 
-//function to update the current changes table
-function addChange(type, description) {
-    var date = new Date();
-    $.getJSON("./json/changes.json", function(json) {
-      var changeJSON = [date.toLocaleString(), type, description];
-      json.changeData.push(changeJSON);
-      var stream = fs.createWriteStream('./resources/app/json/changes.json');
-      stream.write(JSON.stringify(json));
-      stream.end();
-    });
-    setTimeout(function(){ //allow addChange to execute before refresh
-      changesTable.ajax.reload();
-    }, 150);
-}
 
 //*********************BUILDING AND SHIPPING OF NDF****************************//
 //Function to construct the NDF file for a user network
@@ -788,7 +775,10 @@ function sendNDF(){
   			data: {NDF: ndfVar}, //this will be the actual NDF file (all the 3 arrays)
   			success: function(data, status, xhr){
   				alert(data);
-          setTimeout(function() {NSROtimer = setInterval(refreshNSRO, 1000);}, 3000);
+          if (newUser == 'true'){
+            setTimeout(function() {NSROtimer = setInterval(refreshNSRO, 1000);}, 3000);
+            newUser = 'false';
+          }
   			},
   			error: function(data, status, xhr)
   			{
@@ -797,7 +787,6 @@ function sendNDF(){
   		});
   	}
 }
-
 //**************END BUILDING AND SHIPPING OF NDF**************************//
 
 //********************CLEAN WORKSPACE ******************//
@@ -845,32 +834,6 @@ function deleteAreaFiles(dirPath) {
 };
 //********************END CLEAN WORKSPACE **************//
 
-function loadAreaDeviceTable(areaName){
-  if ($.fn.dataTable.isDataTable('#deviceTable')){ //if the datatable is created, destroy it
-    $('#deviceTable').dataTable().fnDestroy();
-  }
-  deviceTable = $('#deviceTable').DataTable({
-    "paging": true,
-    "iDisplayLength": 5,
-    "lengthMenu": [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
-    "responsive": true,
-    "autoWidth": false,
-    "language": {"emptyTable": "No ACUs have been created"},
-    "order": [[0, 'desc']],
-    "columns": [
-        { "width": "12%" },
-        { "width": "15%" },
-        { "width": "20%" },
-        { "width": "28%" },
-        { "width": "25%" }
-    ],
-    "ajax": {
-      "url": './json/area_devices/' + areaName + '-devices.json',
-      "dataSrc": 'deviceData'
-    }
-  });
-}
-
 
 /********************** GENERAL PROGRAM METHOD CALLS ***********************/
 //Finds a created area in the list of areas
@@ -907,7 +870,49 @@ function getQueryVariable(variable, queryString) {
   console.log('Query variable %s not found', variable);
 }
 
-//**************SETTINGS MENU FUNCTION CALLS*****************************///
+//function to update the current changes table
+function addChange(type, description) {
+    var date = new Date();
+    $.getJSON("./json/changes.json", function(json) {
+      var changeJSON = [date.toLocaleString(), type, description];
+      json.changeData.push(changeJSON);
+      var stream = fs.createWriteStream('./resources/app/json/changes.json');
+      stream.write(JSON.stringify(json));
+      stream.end();
+    });
+    setTimeout(function(){ //allow addChange to execute before refresh
+      changesTable.ajax.reload();
+    }, 150);
+}
+
+function loadAreaDeviceTable(areaName){
+  if ($.fn.dataTable.isDataTable('#deviceTable')){ //if the datatable is created, destroy it
+    $('#deviceTable').dataTable().fnDestroy();
+  }
+  deviceTable = $('#deviceTable').DataTable({
+    "paging": true,
+    "iDisplayLength": 5,
+    "lengthMenu": [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
+    "responsive": true,
+    "autoWidth": false,
+    "language": {"emptyTable": "No ACUs have been created"},
+    "order": [[0, 'desc']],
+    "columns": [
+        { "width": "12%" },
+        { "width": "15%" },
+        { "width": "20%" },
+        { "width": "28%" },
+        { "width": "25%" }
+    ],
+    "ajax": {
+      "url": './json/area_devices/' + areaName + '-devices.json',
+      "dataSrc": 'deviceData'
+    }
+  });
+}
+//********************END GENERAL METHODS*********************************//
+
+//**************SETTINGS MENU FUNCTION CALLS*****************************//
 //enables-disables the new network name field
 function enableNewNetwork()
 {
@@ -1049,7 +1054,6 @@ function deleteSomething() {
 	}
 };
 //*************************END SETTINGS MENU CALLS***************************//
-
 
 //load user profile ajax call
 $('#logout-button').click(function(event) {
