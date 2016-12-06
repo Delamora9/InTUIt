@@ -87,11 +87,6 @@ while being responsive to its conainer */
     overflow: auto; /* Enable scrolling if the sidenav has too much content */
 }
 
-.search-bar {
-	margin-top: 5%;
-	margin-bottom: 10%;
-}
-
 .selection {
   white-space: pre;
 }

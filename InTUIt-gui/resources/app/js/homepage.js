@@ -17,18 +17,18 @@ var username = 'generic'; //Variable for logged in user. Default is 'generic'
 var password;
 var networkName = 'network'; //Variable for current network. Default is 'network'
 var ndfFilename = username + networkName + '.ndf';
-var ndfFilePath;
+var ndfFilePath; //Variable to access current NDF filepath
 
 var currentNetwork; //Holds the entire network structure
 
-var NSROtimer;
+var NSROtimer; //Timer Variable to refresh NSRO
 
+//Global table variables to instantiate dataTables
 var deviceTable;
 var areaTable;
 var changesTable;
 
 var timerCount = 0;
-
 
 //script that executes once homepage is fully loaded
 $(document).ready(function() {
@@ -242,6 +242,17 @@ $('#add-area-button').click(function() {
   }
 });
 
+//Fires when SelectArea option is changed
+$('#areaSelect').change(function() {
+  if($('#areaSelect').val() != 'none') {
+    loadAreaDeviceTable($('#areaSelect').val());
+    $('#areaDeviceDisplay').show();
+  }
+  else {
+    $('#areaDeviceDisplay').hide();
+  }
+});
+
 //event fires upon adding an area
 $('#addAreaForm').submit(function(e){
   e.preventDefault(); //prevent form from redirect
@@ -378,6 +389,7 @@ $('#add-device-button').click(function() {
     $('#add-device-modal').modal({
       focus: true
     });
+    $('#areaSelect').val("none");
     $('#areaDeviceDisplay').hide();
   }
 });
@@ -482,6 +494,33 @@ $('#remove-device-button').click(function() {
     $('#remove-device-modal').modal({
       focus: true
     });
+    $("#removeAreaDevice").hide();
+    $('#areaSelect2').val("none");
+    $('#deviceSelect').val("none");
+  }
+});
+
+//event triggered by selecting an area in remove device modal
+$('#areaSelect2').change(function() {
+  if($('#areaSelect2').val() != 'none'){
+
+    $('#deviceSelect').empty();
+    $('#deviceSelect').append('<option value=\"none\" selected>Select a Device</option>');
+    var removeACUArea = findArea($('#areaSelect2').val());
+    if (removeACUArea.acuList.length != 0){
+      for (var i = 0; i < removeACUArea.acuList.length; i++) {
+        var device = removeACUArea.acuList[i];
+        $('#deviceSelect').append('<option value="' + device.acuName + '">' + device.acuName +'</option>');
+      }
+      $("#removeAreaDevice").show();
+    }
+    else{
+      alert("No ACUs to remove from this area.")
+      $("#removeAreaDevice").hide();
+    }
+  }
+  else{
+    $("#removeAreaDevice").hide();
   }
 });
 
@@ -532,6 +571,7 @@ $('#add-policy-button').click(function() {
   else {
     $('#policyInfo').hide();
     $('#policyDeviceArea').hide();
+    $('#policyArea').val("none");
     $('#create-policy-modal').modal({
       focus: true
     });
@@ -577,10 +617,10 @@ $('#createPolicyForm').submit(function(e){
     var policyDevice = $('#policyDevice').val();
     var policy = "\"Given {" + $('#givenStates').val().replace(', ', ',') + "} associate " + $('#associatedCommand').val() +"\"";
     addPolicy(policyArea, policyDevice, policy, true);
-    $('#givenStates,#associateCommand').val(function(){
+    $('#givenStates,#associatedCommand').val(function(){
       return this.defaultValue;
     });
-    $('#policyArea').focus();
+    $('#givenStates').focus();
   }
 });
 
@@ -607,6 +647,7 @@ $('#remove-policy-button').click(function() {
   else {
     $('#policyInfo2').hide();
     $('#policyDeviceArea2').hide();
+    $('#policyArea2').val("none");
     $('#remove-policy-modal').modal({
       focus: true
     });
@@ -640,6 +681,7 @@ $('#policyDevice2').change(function(){
   var acu = findACU($('#policyDevice2').val(), tempArea);
   if(acu.policyList.length == 0){
     alert("The selected device has no policies.")
+    $('#policyInfo2').hide();
   }
   for(var i = 0; i < acu.policyList.length; i++){
     var policy = acu.policyList[i];
@@ -661,6 +703,17 @@ $('#removePolicyForm').submit(function(e){
   }
   else{
     removePolicy($('#policyArea2').val(), $('#policyDevice2').val(), $('#policyToRemove').val());
+    $('#policyToRemove').empty();
+    var tempArea = findArea($('#policyArea2').val());
+    var acu = findACU($('#policyDevice2').val(), tempArea);
+    if(acu.policyList.length == 0){
+      alert("All Policies have been deleted. Select different device/area.");
+      $('#policyInfo2').hide();
+    }
+    for(var i = 0; i < acu.policyList.length; i++){
+      var policy = acu.policyList[i];
+      $('#policyToRemove').append('<option value=' + policy.policy + '>' + policy.policy + '</option>');
+    }
   }
 });
 
@@ -669,9 +722,7 @@ function removePolicy(area, device, policy){
   var acu = findACU(device, removalArea);
   policy = "\"" + policy + "\"";
   for(var i = 0; i < acu.policyList.length; i++) {
-      alert(acu.policyList[i].policy);
       if(acu.policyList[i].policy == policy){
-          alert("gotcha");
           acu.policyList.splice(i, 1);
       }
   }
@@ -794,11 +845,6 @@ function deleteAreaFiles(dirPath) {
 };
 //********************END CLEAN WORKSPACE **************//
 
-$('#areaSelect').change(function() {
-  loadAreaDeviceTable($('#areaSelect').val());
-  $('#areaDeviceDisplay').show();
-});
-
 function loadAreaDeviceTable(areaName){
   if ($.fn.dataTable.isDataTable('#deviceTable')){ //if the datatable is created, destroy it
     $('#deviceTable').dataTable().fnDestroy();
@@ -824,18 +870,6 @@ function loadAreaDeviceTable(areaName){
     }
   });
 }
-
-
-//event triggered by selecting an area in remove device modal
-$('#areaSelect2').change(function() {
-  $('#deviceSelect').empty();
-  $('#deviceSelect').append('<option value=\"none\" selected>Select a Device</option>');
-  var removeACUArea = findArea($('#areaSelect2').val());
-  for (var i = 0; i < removeACUArea.acuList.length; i++) {
-    var device = removeACUArea.acuList[i];
-    $('#deviceSelect').append('<option value="' + device.acuName + '">' + device.acuName +'</option>');
-  }
-});
 
 
 /********************** GENERAL PROGRAM METHOD CALLS ***********************/

@@ -8,8 +8,9 @@ app.on('window-all-closed', function() {
 
 app.on('ready', function() {
   var win = new BrowserWindow({
-    width:1350, height: 770,
+    width:1100, height: 770,
     minHeight: 715,
+    maxWidth: 1100,
     autoHideMenuBar: true,
     useContentSize: true
     //resizable: false
