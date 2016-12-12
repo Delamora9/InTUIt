@@ -1,7 +1,8 @@
 /*****************************************************************************************************************
 Programmed by: Christopher Franklyn, Jess Geiger, Nick Delamora, Keith Cissell
-Description: This file contains important functions and resources for the entire UI
-Last Modified: 11/16/2016
+Description: This file contains important functions and resources for the
+behavior of the entire UI
+Last Modified: 12/12/2016
 ******************************************************************************************************************/
 
 //this command loads jquery properly
@@ -259,7 +260,7 @@ $('#addAreaForm').submit(function(e){
   e.preventDefault(); //prevent form from redirect
   setTimeout(function(){ //allow addArea to execute before refresh
     areaTable.ajax.reload();
-  }, 100);
+  }, 300);
   addArea($('#areaName').val(), true);
   $('#addAreaForm')[0].reset(); //reset form fields
   $('#areaName').focus();
@@ -403,7 +404,7 @@ $('#addDeviceForm').submit(function(e){
     $('#deviceName,#deviceDependencies,#deviceActions,#deviceStates').val(function(){
       return this.defaultValue;
     });
-  }, 100);
+  }, 300);
 
   var deviceName = $('#deviceName').val();
   var dependencies = $('#deviceDependencies').val();
@@ -750,7 +751,7 @@ $('#submitNDF').click(function buildNDF() {
   setTimeout(function(){ //allow addChange to execute before refresh
     changesTable.ajax.reload();
     sendNDF(); //Send constructed NDF to compess
-  }, 100);
+  }, 300);
 
   //visual update of submit below submit button
   var date = new Date();
@@ -818,7 +819,7 @@ function clearChangesTable() {
     });
 }
 
-//deletes all files in the ./json/area_devices folder
+//deletes all files in a specified folder path
 function deleteAreaFiles(dirPath) {
   try { var files = fs.readdirSync(dirPath); }
   catch(e) { return; }
@@ -882,7 +883,7 @@ function addChange(type, description) {
     });
     setTimeout(function(){ //allow addChange to execute before refresh
       changesTable.ajax.reload();
-    }, 150);
+    }, 300);
 }
 
 function loadAreaDeviceTable(areaName){
@@ -976,13 +977,15 @@ function ndfQuery() {
 			method:'GET',
 			success: function(data, status, xhttp){
 				var ndfData = data.split('\n');
-				var stream = fs.createWriteStream('./resources/app/ndf/' + username + "-" + changeNetwork);
+				var stream = fs.createWriteStream('./resources/app/ndf/' + username + "-" + changeNetwork + ".ndf");
 				for (var i = 0; i < ndfData.length; i++) {
 					stream.write(ndfData[i] + '\n');
 				}
 				stream.end();
-        alert('NDF recieved');
-				NSROquery(changeNetwork);
+        setTimeout(function() {
+          window.location='./homepage.html?userName=' + username +'&networkName=' + networkName + '&newUser=false';
+        }, 400);
+        alert('NDF recieved. Redirecting to network');
 			},
 			error: function(data, status, xhttp)
 			{
@@ -1021,7 +1024,7 @@ function deleteSomething() {
 	{
 		//delete NDF. reminder that the user is assumed to be logged in
 		$.ajax({
-			url: compesIP + '/NDF?' + $.param({"netID": "currentSelectedNetworkName"}), //put network ID here
+			url: compesIP + '/NDF?' + $.param({"netID": networkName}), //put network ID here
 			method:'DELETE',
 			success: function(data, status, xhttp){
 				alert(data); //tells the user that the NDF was de-provisioned

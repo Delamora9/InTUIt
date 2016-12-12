@@ -1,8 +1,8 @@
 /*****************************************************************************************************************
-Programmed by: Christopher Franklyn, Jess Geiger
-Description: This file contains important functions and resources for the entire UI, including cloud storage info,
-             functions for interacting with the cloud service, and code dealing with IPMS settings (interval, etc.
-Last Modified: 10/14/2016
+Programmed by: Christopher Franklyn, Jess Geiger, Mitch Marlow
+Description: File for the behavior of our login page. Contains functions that
+connect the user to the CoMPES server
+Last Modified: 12/12/2016
 ******************************************************************************************************************/
 
 //this command loads jquery properly

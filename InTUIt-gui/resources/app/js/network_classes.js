@@ -3,7 +3,7 @@ Programmed by: Ketih Cissell
 Description: This file contains the class structure that makes up a Network. There are 4 classes: Network, Area,
              ACU, Policy. The classes are structured as objects which contain other objects. A Network contains
              Areas; Areas contain ACUs; ACUs contain Policies.
-Last Modified: 11/5/2016
+Last Modified: 12/12/2016
 ******************************************************************************************************************/
 
 

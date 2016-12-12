@@ -1,3 +1,9 @@
+/*****************************************************************************************************************
+Programmed by: Nick Delamora, Keith Cissell
+Description: This file contains the behavior for the visualization of the network
+Last Modified: 12/12/2016
+******************************************************************************************************************/
+
 // create an array with nodes
 var nodes = new vis.DataSet([
 ]);
